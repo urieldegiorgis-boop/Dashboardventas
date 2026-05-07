@@ -1385,13 +1385,20 @@ function parseCSV(text){
   return rows;
 }
 function parseEur(v){
-  var s=String(v||'').replace(/[€\s"]/g,'').trim();
-  // Detect European format: 1.397,00 → remove dots, replace comma with dot
-  if(/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)){
-    s=s.replace(/\./g,'').replace(',','.');
-  } else {
-    // US/standard format: 1,397.00 → remove commas
-    s=s.replace(/,/g,'');
+  // Strip quotes, euro sign, spaces
+  var s=String(v||'').replace(/"/g,'').replace(/€/g,'').replace(/\s/g,'').trim();
+  if(!s)return 0;
+  // Format: 1,397.00 (US thousands + dot decimal) → remove commas
+  if(/^-?\d{1,3}(,\d{3})*\.\d+$/.test(s)||/^-?\d{1,3}(,\d{3})+$/.test(s)){
+    return parseFloat(s.replace(/,/g,''))||0;
+  }
+  // Format: 1.397,00 (EU thousands + comma decimal) → remove dots, comma→dot
+  if(/^-?\d{1,3}(\.\d{3})+(,\d*)?$/.test(s)){
+    return parseFloat(s.replace(/\./g,'').replace(',','.'))||0;
+  }
+  // Plain number with comma decimal: 930,56
+  if(/^-?\d+,\d+$/.test(s)){
+    return parseFloat(s.replace(',','.'))||0;
   }
   return parseFloat(s)||0;
 }
