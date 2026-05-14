@@ -70,6 +70,61 @@ select:focus,input:focus{border-color:var(--accent)}
 .card-title{font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px}
 .card-body{padding:14px 16px}
 
+/* FACTURACIÓN POR FUENTE */
+.fac-total{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:4px}
+.fac-total-label{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:6px}
+.fac-total-num{font-size:38px;font-weight:800;color:#fff;letter-spacing:-1px;line-height:1}
+.fac-total-sub{font-size:12px;color:var(--t2);margin-top:4px}
+.fac-vs{font-size:13px;font-weight:700;margin-left:10px}
+.fac-vs.up{color:var(--green)}.fac-vs.dn{color:var(--red)}
+.fac-bar-wrap{height:6px;background:var(--bg4);border-radius:3px;margin:12px 0 8px;display:flex;overflow:hidden;gap:2px}
+.fac-bar-seg{height:100%;border-radius:3px;transition:width .4s}
+.fac-legend{display:flex;flex-wrap:wrap;gap:10px}
+.fac-leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)}
+.fac-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.fac-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.fac-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px;transition:border-color .15s}
+.fac-card:hover{border-color:var(--border2)}
+.fac-card-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.fac-card-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.fac-card-name{font-size:13px;font-weight:700;color:var(--t1);flex:1}
+.fac-card-num{font-size:22px;font-weight:800;color:#fff;margin-bottom:2px}
+.fac-card-pct{font-size:11px;color:var(--t2);margin-bottom:8px}
+.fac-card-bar{height:3px;background:var(--bg4);border-radius:2px;margin-bottom:8px}
+.fac-card-bar-fill{height:100%;border-radius:2px}
+.fac-card-tags{display:flex;flex-wrap:wrap;gap:4px}
+.fac-tag{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:10px;color:var(--t2)}
+.vert-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.vert-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+.vert-card-name{font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.vert-card-num{font-size:20px;font-weight:800;color:#fff;margin-bottom:3px}
+.vert-card-sub{font-size:11px;color:var(--t3)}
+.vert-bar{height:3px;background:var(--bg4);border-radius:2px;margin:8px 0 4px}
+.vert-bar-fill{height:100%;border-radius:2px}
+/* DETAIL MODAL */
+.det-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:flex-start;justify-content:center;z-index:400;padding:30px 20px;overflow-y:auto}
+.det-modal-bg.open{display:flex}
+.det-modal{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;width:100%;max-width:860px;overflow:hidden}
+.det-modal-top{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:1}
+.det-modal-title{font-size:15px;font-weight:700}
+.det-total-block{padding:22px 24px 0}
+.det-total-label{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:5px}
+.det-total-num{font-size:36px;font-weight:800;color:#fff;letter-spacing:-1px;line-height:1}
+.det-total-sub{font-size:12px;color:var(--t2);margin-top:4px}
+.det-bar-wrap{height:6px;background:var(--bg4);border-radius:3px;margin:14px 24px 10px;display:flex;overflow:hidden;gap:2px}
+.det-legend{display:flex;flex-wrap:wrap;gap:10px;padding:0 24px 16px}
+.det-legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)}
+.det-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;padding:0 24px 24px}
+.det-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px}
+.det-card-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.det-card-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.det-card-name{font-size:13px;font-weight:700;color:var(--t1)}
+.det-card-num{font-size:22px;font-weight:800;color:#fff;margin-bottom:2px}
+.det-card-sub{font-size:11px;color:var(--t2);margin-bottom:8px}
+.det-card-bar{height:3px;background:var(--bg4);border-radius:2px;margin-bottom:8px}
+.det-card-bar-fill{height:100%;border-radius:2px}
+.det-card-tags{display:flex;flex-wrap:wrap;gap:4px}
+.det-tag{background:var(--bg2);border:1px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:10px;color:var(--t2)}
 /* CHARTS GRID */
 .charts4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .chart-box{height:180px;position:relative}
@@ -205,12 +260,18 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
     <div class="kpi c-yellow"><div class="kpi-lbl">Com. Reps 💼</div><div class="kpi-val" id="kCom">—</div><div class="kpi-sub" id="kComSub">según tramos config</div></div>
   </div>
 
+
+  <div class="card">
+    <div class="card-head"><span class="card-title">Por Vertical</span><span style="font-size:11px;color:var(--t3)" id="vertSubtitle"></span></div>
+    <div class="card-body"><div class="vert-grid" id="vertGrid"></div></div>
+  </div>
+
   <!-- 4 GRÁFICOS -->
   <div class="charts4">
-    <div class="card"><div class="card-head"><span class="card-title">Cash por Closer</span></div><div class="card-body" style="padding:10px"><div class="chart-box"><canvas id="cBarCloser"></canvas></div></div></div>
-    <div class="card"><div class="card-head"><span class="card-title">Cash por Setter</span></div><div class="card-body" style="padding:10px"><div class="chart-box"><canvas id="cBarSetter"></canvas></div></div></div>
-    <div class="card"><div class="card-head"><span class="card-title">Cash por Source</span></div><div class="card-body" style="padding:10px"><div class="chart-box"><canvas id="cDonut"></canvas></div><div id="donutLeg" style="margin-top:8px;display:flex;flex-direction:column;gap:4px"></div></div></div>
-    <div class="card"><div class="card-head"><span class="card-title">Cash por UTM Term</span><button class="btn btn-ghost" style="font-size:11px;padding:3px 9px" onclick="openUtmModal()">Ver todo ↗</button></div><div class="card-body" style="padding:10px"><div class="chart-box"><canvas id="cBarUtm"></canvas></div></div></div>
+    <div class="card" style="cursor:pointer" onclick="openDetModal('closer')"><div class="card-head"><span class="card-title">Cash por Closer</span><span style="font-size:10px;color:var(--t3)">Ver detalle →</span></div><div class="card-body" style="padding:10px"><div class="chart-box"><canvas id="cBarCloser"></canvas></div></div></div>
+    <div class="card" style="cursor:pointer" onclick="openDetModal('setter')"><div class="card-head"><span class="card-title">Cash por Setter</span><span style="font-size:10px;color:var(--t3)">Ver detalle →</span></div><div class="card-body" style="padding:10px"><div class="chart-box"><canvas id="cBarSetter"></canvas></div></div></div>
+    <div class="card" style="cursor:pointer" onclick="openDetModal('source')"><div class="card-head"><span class="card-title">Cash por Source</span><span style="font-size:10px;color:var(--t3)">Ver detalle →</span></div><div class="card-body" style="padding:10px"><div class="chart-box"><canvas id="cDonut"></canvas></div><div id="donutLeg" style="margin-top:8px;display:flex;flex-direction:column;gap:4px"></div></div></div>
+    <div class="card" style="cursor:pointer" onclick="openDetModal('utm')"><div class="card-head"><span class="card-title">Cash por UTM Term</span><span style="font-size:10px;color:var(--t3)">Ver detalle →</span></div><div class="card-body" style="padding:10px"><div class="chart-box"><canvas id="cBarUtm"></canvas></div></div></div>
   </div>
 
   <!-- EVOLUCIÓN -->
@@ -263,7 +324,7 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
     </div>
     <div class="tbl-wrap">
       <table class="btbl"><thead><tr>
-        <th>Fecha</th><th>Nombre</th><th>Email</th><th>País</th><th>Closer</th><th>Setter</th><th>Source</th><th>UTM Term</th><th>Deal</th><th>Offer</th><th>Revenue</th><th>Cash</th><th>Pago</th><th>Refund</th><th></th>
+        <th>Fecha</th><th>Nombre</th><th>Email</th><th>País</th><th>Closer</th><th>Setter</th><th>Source</th><th>UTM Term</th><th>Deal</th><th>Offer</th><th>Vertical</th><th>Revenue</th><th>Cash</th><th>Pago</th><th>Refund</th><th></th>
       </tr></thead><tbody id="ventasBody"></tbody></table>
     </div>
     <div id="ventasEmpty" class="empty" style="display:none">Sin ventas</div>
@@ -286,6 +347,7 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
       <div class="field"><label>UTM Term</label><input id="fUtm" placeholder="spain-men-25-45"></div>
       <div class="field"><label>Deal</label><select id="fDeal2"></select></div>
       <div class="field"><label>Offer</label><select id="fOffer2"></select></div>
+      <div class="field"><label>Vertical</label><select id="fVertical"><option value="">— Seleccionar —</option><option value="Inteligencia Artificial">Inteligencia Artificial</option><option value="Marca Personal">Marca Personal</option><option value="Ecommerce">Ecommerce</option><option value="Ventas">Ventas</option></select></div>
       <div class="field"><label>Revenue (€) *</label><input id="fRevenue" type="number" step="0.01" placeholder="1397.00"></div>
       <div class="field"><label>Cash (€) *</label><input id="fCash" type="number" step="0.01" placeholder="930.56"></div>
       <div class="field"><label>Tipo de Pago</label><select id="fPago2"></select></div>
@@ -501,7 +563,8 @@ function dbRowToSale(r){
     txid: r.txid||'',
     notas: r.notas||'',
     justificante: r.justificante||'',
-    cuentaIG: r.cuenta_ig||''
+    cuentaIG: r.cuenta_ig||'',
+    vertical: r.vertical||''
   };
 }
 function saleToDbRow(s){
@@ -523,7 +586,8 @@ function saleToDbRow(s){
     txid: s.txid||'',
     notas: s.notas||'',
     justificante: s.justificante||'',
-    cuenta_ig: s.cuentaIG||''
+    cuenta_ig: s.cuentaIG||'',
+    vertical: s.vertical||''
   };
   return row;
 }
@@ -620,7 +684,7 @@ function weekKey(dateStr){var d=dateStr?new Date(dateStr):new Date();var jan=new
 // ── RENDER ────────────────────────────────────────────────────────────────
 function render(){
   ge('totalTag').textContent=sales.length+' ventas';
-  renderKPIs();renderTables();drawCharts();drawEvo();
+  renderKPIs();renderTables();renderFuentes();renderVerticals();drawCharts();drawEvo();
 }
 
 function getPrevRange(){
@@ -845,6 +909,222 @@ function drawLine(id,labels,vals,color){
   canvas.onmouseleave=function(){ge('chartTip').style.display='none';};
 }
 
+// FUENTES CONFIG — colores y submétodos por fuente
+var FUENTES_CFG={
+  'VSL':       {color:'#4f8ef7', tags:['Facebook Ads','YouTube','Google']},
+  'Setter':    {color:'#4caf7d', tags:['DM directo','Reels','Stories','Bio link']},
+  'Upsell':    {color:'#f0b429', tags:['Email','Llamada','WhatsApp']},
+  'Renovacion':{color:'#9b59b6', tags:['Renovación']},
+  'Referido':  {color:'#5af5b8', tags:['Referido cliente']},
+  'Otro':      {color:'#8892aa', tags:[]},
+};
+var VERTICALS=['Inteligencia Artificial','Marca Personal','Ecommerce','Ventas'];
+var VERT_COLORS=['#4f8ef7','#f0b429','#e05c5c','#4caf7d','#8892aa'];
+
+function renderFuentes(){
+  var totalCash=0,totalPagos=0;
+  var fm={};
+  filtered.forEach(function(s){
+    if(s.refund==='yes')return;
+    var src=s.source||'Otro';
+    if(!fm[src])fm[src]={cash:0,pagos:0};
+    var c=parseFloat(s.cash)||0;
+    fm[src].cash+=c;fm[src].pagos++;
+    totalCash+=c;totalPagos++;
+  });
+
+  // Total
+  var tn=ge('facTotalNum');if(tn)tn.textContent=fmt(totalCash);
+  var ts=ge('facTotalSub');if(ts)ts.textContent=totalPagos+' ventas · todas las fuentes';
+
+  // Cards por fuente — siempre mostrar Referidos aunque tenga 0
+  if(!fm['Referido'])fm['Referido']={cash:0,pagos:0};
+  var sources=Object.keys(fm).sort(function(a,b){
+    // Referido siempre al final si tiene 0
+    if(fm[a].cash===0&&fm[b].cash>0)return 1;
+    if(fm[b].cash===0&&fm[a].cash>0)return -1;
+    return fm[b].cash-fm[a].cash;
+  });
+  var cards=ge('facCards');
+  if(cards){
+    cards.innerHTML='';
+    sources.forEach(function(src){
+      var cfg=FUENTES_CFG[src]||{color:'#8892aa',tags:[]};
+      var d=fm[src];
+      var pct=totalCash?Math.round(d.cash/totalCash*100):0;
+      var tags=(cfg.tags||[]).map(function(t){return '<span class="fac-tag">'+esc(t)+'</span>';}).join('');
+      var isEmpty=d.cash===0;
+      var card=document.createElement('div');card.className='fac-card';
+      card.style.opacity=isEmpty?'0.5':'1';
+      card.innerHTML='<div class="fac-card-head">'
+        +'<div class="fac-card-dot" style="background:'+cfg.color+'"></div>'
+        +'<span class="fac-card-name">'+esc(src)+'</span>'
+        +(isEmpty?'<span style="font-size:10px;color:var(--t3);margin-left:auto">Próximamente</span>':'')
+        +'</div>'
+        +'<div class="fac-card-num">'+(isEmpty?'0,00€':fmt(d.cash))+'</div>'
+        +'<div class="fac-card-pct">'+(isEmpty?'Sin ventas aún':pct+'% del total · '+d.pagos+' ventas')+'</div>'
+        +'<div class="fac-card-bar"><div class="fac-card-bar-fill" style="width:'+pct+'%;background:'+cfg.color+'"></div></div>'
+        +(tags?'<div class="fac-card-tags">'+tags+'</div>':'');
+      cards.appendChild(card);
+    });
+  }
+}
+
+function renderVerticals(){
+  var vm={};
+  var totalCash=0;
+  filtered.forEach(function(s){
+    if(s.refund==='yes')return;
+    // Intentar leer vertical del campo utm o deal; si no, "Otro"
+    var vert=s.vertical||'Otro';
+    if(!VERTICALS.includes(vert))vert='Otro';
+    if(!vm[vert])vm[vert]={cash:0,pagos:0};
+    var c=parseFloat(s.cash)||0;
+    vm[vert].cash+=c;vm[vert].pagos++;
+    totalCash+=c;
+  });
+
+  var grid=ge('vertGrid');if(!grid)return;
+  grid.innerHTML='';
+  var sub=ge('vertSubtitle');
+  if(sub)sub.textContent=fmt(totalCash)+' total';
+
+  VERTICALS.forEach(function(v,i){
+    var d=vm[v]||{cash:0,pagos:0};
+    var pct=totalCash?Math.round(d.cash/totalCash*100):0;
+    var col=VERT_COLORS[i]||'#8892aa';
+    var card=document.createElement('div');card.className='vert-card';
+    card.style.borderTop='2px solid '+col;
+    card.innerHTML='<div class="vert-card-name">'+esc(v)+'</div>'
+      +'<div class="vert-card-num">'+fmt(d.cash)+'</div>'
+      +'<div class="vert-card-sub">'+d.pagos+' ventas · '+pct+'% del total</div>'
+      +'<div class="vert-bar"><div class="vert-bar-fill" style="width:'+pct+'%;background:'+col+'"></div></div>';
+    grid.appendChild(card);
+  });
+}
+
+// ── DETAIL MODAL ──────────────────────────────────────────────────────────
+var CHART_COLORS=['#4f8ef7','#4caf7d','#f0b429','#e05c5c','#9b59b6','#5af5b8','#f5905a','#b8f55a','#e67e22','#1abc9c'];
+
+var _detType='';
+function openDetModal(type){
+  _detType=type;
+  var map={};
+  var totalCash=0,totalPagos=0;
+  filtered.forEach(function(s){
+    if(s.refund==='yes')return;
+    var key;
+    if(type==='closer')key=s.closer||'Sin closer';
+    else if(type==='setter')key=s.setter||'Sin setter';
+    else if(type==='source')key=s.source||'Otro';
+    else if(type==='utm')key=s.utm||'Sin UTM';
+    if(!key)return;
+    if(!map[key])map[key]={cash:0,pagos:0};
+    var c=parseFloat(s.cash)||0;
+    map[key].cash+=c;map[key].pagos++;
+    totalCash+=c;totalPagos++;
+  });
+  var titles={closer:'Cash por Closer',setter:'Cash por Setter',source:'Cash por Source',utm:'Cash por UTM Term'};
+  var labels={closer:'closers',setter:'setters',source:'fuentes',utm:'UTM terms'};
+  ge('detModalTitle').textContent=titles[type]||'Detalle';
+  ge('detTotalLabel').textContent='Cash Collected';
+  ge('detTotalNum').textContent=fmt(totalCash);
+  ge('detTotalSub').textContent=totalPagos+' ventas · '+Object.keys(map).length+' '+(labels[type]||'items')+' · Click en una card para ver sus ventas';
+  ge('detBackBtn').style.display='none';
+  ge('detSummaryView').style.display='block';
+  ge('detDrillView').style.display='none';
+  var keys=Object.keys(map).sort(function(a,b){return map[b].cash-map[a].cash;});
+  var barWrap=ge('detBarWrap');barWrap.innerHTML='';
+  keys.forEach(function(k,i){
+    var pct=totalCash?map[k].cash/totalCash*100:0;
+    var seg=document.createElement('div');
+    seg.style.cssText='height:100%;border-radius:3px;background:'+CHART_COLORS[i%CHART_COLORS.length]+';width:'+pct+'%;min-width:'+(pct>0?'3px':'0');
+    barWrap.appendChild(seg);
+  });
+  var leg=ge('detLegend');leg.innerHTML='';
+  keys.forEach(function(k,i){
+    var pct=totalCash?Math.round(map[k].cash/totalCash*100):0;
+    var item=document.createElement('div');item.className='det-legend-item';
+    item.innerHTML='<div style="width:8px;height:8px;border-radius:50%;background:'+CHART_COLORS[i%CHART_COLORS.length]+';flex-shrink:0"></div>'
+      +'<span>'+esc(k)+'</span>'
+      +'<span style="color:var(--t1);font-weight:600;margin-left:4px">'+fmt(map[k].cash)+'</span>'
+      +'<span style="color:var(--t3);margin-left:4px">'+pct+'%</span>';
+    leg.appendChild(item);
+  });
+  var cards=ge('detCards');cards.innerHTML='';
+  keys.forEach(function(k,i){
+    var d=map[k];
+    var pct=totalCash?Math.round(d.cash/totalCash*100):0;
+    var col=CHART_COLORS[i%CHART_COLORS.length];
+    var avg=d.pagos?Math.round(d.cash/d.pagos):0;
+    var card=document.createElement('div');
+    card.className='det-card';
+    card.style.cssText='cursor:pointer;transition:border-color .15s,transform .1s';
+    card.onmouseenter=function(){this.style.borderColor=col;this.style.transform='translateY(-2px)';};
+    card.onmouseleave=function(){this.style.borderColor='';this.style.transform='';};
+    card.innerHTML='<div class="det-card-head">'
+      +'<div class="det-card-dot" style="background:'+col+'"></div>'
+      +'<span class="det-card-name">'+esc(k)+'</span>'
+      +'<span style="font-size:10px;color:var(--t3);margin-left:auto">Ver ventas →</span>'
+      +'</div>'
+      +'<div class="det-card-num">'+fmt(d.cash)+'</div>'
+      +'<div class="det-card-sub">'+pct+'% del total · '+d.pagos+' ventas · avg '+fmt(avg)+'</div>'
+      +'<div class="det-card-bar"><div class="det-card-bar-fill" style="width:'+pct+'%;background:'+col+'"></div></div>';
+    card.onclick=(function(key,color){return function(){openDrillDown(type,key,color);};})(k,col);
+    cards.appendChild(card);
+  });
+  ge('detModalBg').classList.add('open');
+}
+function openDrillDown(type,key,color){
+  var ventas=filtered.filter(function(s){
+    if(s.refund==='yes')return false;
+    if(type==='closer')return(s.closer||'Sin closer')===key;
+    if(type==='setter')return(s.setter||'Sin setter')===key;
+    if(type==='source')return(s.source||'Otro')===key;
+    if(type==='utm')return(s.utm||'Sin UTM')===key;
+    return false;
+  });
+  ventas.sort(function(a,b){return(b.fecha||'').localeCompare(a.fecha||'');});
+  var totalDrill=ventas.reduce(function(s,v){return s+(parseFloat(v.cash)||0);},0);
+  ge('detModalTitle').textContent=key;
+  ge('detBackBtn').style.display='inline-flex';
+  ge('drillTitle').textContent=key;
+  ge('drillSub').textContent=ventas.length+' ventas';
+  ge('drillTotal').textContent=fmt(totalDrill);
+  var tbody=ge('drillBody');tbody.innerHTML='';
+  ventas.forEach(function(s){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+fmtD(s.fecha)+'</td>'
+      +'<td style="font-weight:600">'+esc(s.nombre)+'</td>'
+      +'<td style="font-size:11px;color:var(--t2)">'+esc(s.email)+'</td>'
+      +'<td>'+esc(s.closer||'—')+'</td>'
+      +'<td>'+esc(s.setter||'—')+'</td>'
+      +'<td><span class="pill pb">'+esc(s.source||'—')+'</span></td>'
+      +'<td style="font-size:11px">'+esc(s.utm||'—')+'</td>'
+      +'<td><span class="pill pgr">'+esc(s.deal||'—')+'</span></td>'
+      +'<td>'+fmt(s.revenue)+'</td>'
+      +'<td style="color:var(--green);font-weight:600">'+fmt(s.cash)+'</td>'
+      +'<td>'+esc(s.tipoPago||'—')+'</td>';
+    tbody.appendChild(tr);
+  });
+  if(!ventas.length)tbody.innerHTML='<tr><td colspan="11" class="empty">Sin ventas</td></tr>';
+  ge('detSummaryView').style.display='none';
+  ge('detDrillView').style.display='block';
+}
+function closeDrillDown(){
+  ge('detBackBtn').style.display='none';
+  ge('detSummaryView').style.display='block';
+  ge('detDrillView').style.display='none';
+  var titles={closer:'Cash por Closer',setter:'Cash por Setter',source:'Cash por Source',utm:'Cash por UTM Term'};
+  ge('detModalTitle').textContent=titles[_detType]||'Detalle';
+}
+function closeDetModal(){
+  ge('detModalBg').classList.remove('open');
+  ge('detSummaryView').style.display='block';
+  ge('detDrillView').style.display='none';
+  ge('detBackBtn').style.display='none';
+}
+
 function drawCharts(){
   var C=['#4f8ef7','#4caf7d','#f0b429','#e05c5c','#9b59b6','#5af5b8','#f5905a','#b8f55a'];
   var cm={};filtered.forEach(function(s){if(s.refund==='yes')return;var c=s.closer||'?';if(!cm[c])cm[c]=0;cm[c]+=parseFloat(s.cash)||0;});
@@ -919,6 +1199,7 @@ function renderVentas(){
       +'<td style="font-size:11px">'+esc(s.utm||'—')+'</td>'
       +'<td><span class="pill '+(isR?'pr':'pgr')+'">'+esc(s.deal)+'</span></td>'
       +'<td>'+esc(s.offer)+'</td>'
+      +'<td style="font-size:11px;color:var(--blue)">'+esc(s.vertical||'—')+'</td>'
       +'<td>'+fmt(s.revenue)+'</td>'
       +'<td style="color:var(--green);font-weight:600">'+fmt(s.cash)+'</td>'
       +'<td>'+esc(s.tipoPago)+'</td>'
@@ -982,6 +1263,7 @@ function resetForm(){
   ['fNombre','fEmail','fUtm','fTxid','fNotas'].forEach(function(id){ge(id).value='';});
   ge('fPais').value='Spain';ge('fFecha').value=td();
   ge('fRevenue').value='';ge('fCash').value='';ge('formOk').style.display='none';
+  if(ge('fVertical'))ge('fVertical').value='';
 }
 async function saveForm(){
   var nombre=ge('fNombre').value.trim(),fecha=ge('fFecha').value;
@@ -989,6 +1271,7 @@ async function saveForm(){
   var s={nombre:nombre,email:ge('fEmail').value.trim(),pais:ge('fPais').value.trim(),fecha:fecha,
     closer:ge('fCloser2').value,setter:ge('fSetter2').value,source:ge('fSource2').value,
     utm:ge('fUtm').value.trim(),deal:ge('fDeal2').value,offer:ge('fOffer2').value,
+    vertical:ge('fVertical').value,
     revenue:ge('fRevenue').value,cash:ge('fCash').value,tipoPago:ge('fPago2').value,
     refund:'no',txid:ge('fTxid').value.trim(),notas:ge('fNotas').value.trim(),cuentaIG:'',justificante:''};
   var {data,error}=await supa.from('ventas').insert([saleToDbRow(s)]).select().single();
@@ -1442,7 +1725,7 @@ function csvRowToDb(row){
   setTimeout(function(){applyF();},50);
 })();
 ge('modalBg').addEventListener('click',function(e){if(e.target===this)closeModal();});
-document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeModal();closeDetModal();}});
 window.addEventListener('resize',function(){drawCharts();drawEvo();});
 setEvo('day');
 </script>
@@ -1458,6 +1741,49 @@ setEvo('day');
       </div>
     </div>
     <div id="utmModalContent" style="padding:20px"></div>
+  </div>
+</div>
+<!-- DETAIL MODAL -->
+<div id="detModalBg" class="det-modal-bg" onclick="if(event.target===this)closeDetModal()">
+  <div class="det-modal" style="max-width:1000px">
+    <div class="det-modal-top">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn btn-ghost" id="detBackBtn" style="display:none;font-size:12px" onclick="closeDrillDown()">← Volver</button>
+        <span class="det-modal-title" id="detModalTitle">Detalle</span>
+      </div>
+      <button class="btn btn-ghost" onclick="closeDetModal()">✕</button>
+    </div>
+    <!-- Vista resumen (cards) -->
+    <div id="detSummaryView">
+      <div class="det-total-block">
+        <div class="det-total-label" id="detTotalLabel">Total</div>
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <div class="det-total-num" id="detTotalNum">—</div>
+        </div>
+        <div class="det-total-sub" id="detTotalSub"></div>
+      </div>
+      <div class="det-bar-wrap" id="detBarWrap"></div>
+      <div class="det-legend" id="detLegend"></div>
+      <div class="det-cards" id="detCards"></div>
+    </div>
+    <!-- Vista drill-down (tabla de ventas) -->
+    <div id="detDrillView" style="display:none;padding:0 24px 24px">
+      <div style="margin:16px 0 10px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <span style="font-size:13px;font-weight:700;color:var(--t1)" id="drillTitle"></span>
+          <span style="font-size:11px;color:var(--t3);margin-left:8px" id="drillSub"></span>
+        </div>
+        <span style="font-size:16px;font-weight:800;color:var(--green)" id="drillTotal"></span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="tbl" style="width:100%">
+          <thead><tr>
+            <th>Fecha</th><th>Nombre</th><th>Email</th><th>Closer</th><th>Setter</th><th>Source</th><th>UTM</th><th>Deal</th><th>Revenue</th><th style="color:var(--green)">Cash</th><th>Pago</th>
+          </tr></thead>
+          <tbody id="drillBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 </body>
