@@ -53,16 +53,17 @@ select:focus,input:focus{border-color:var(--accent)}
 
 /* KPI CARDS */
 .kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
-.kpi{border-radius:8px;padding:16px;border:1px solid transparent;text-align:center}
-.kpi.c-purple{background:rgba(155,89,182,.15);border-color:rgba(155,89,182,.3)}
-.kpi.c-green{background:rgba(76,175,125,.15);border-color:rgba(76,175,125,.3)}
-.kpi.c-blue{background:rgba(79,142,247,.15);border-color:rgba(79,142,247,.3)}
-.kpi.c-teal{background:rgba(90,245,184,.15);border-color:rgba(90,245,184,.3)}
-.kpi.c-red{background:rgba(224,92,92,.15);border-color:rgba(224,92,92,.3)}
-.kpi.c-yellow{background:rgba(240,180,41,.15);border-color:rgba(240,180,41,.3)}
-.kpi-lbl{font-size:10px;color:#b8bfd4;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;font-weight:600}
-.kpi-val{font-size:24px;font-weight:700;color:#fff;line-height:1}
-.kpi-sub{font-size:10px;color:#b8bfd4;margin-top:5px}
+.kpi{border-radius:10px;padding:18px 16px;border:1px solid transparent;text-align:center;transition:transform .15s}
+.kpi:hover{transform:translateY(-2px)}
+.kpi.c-purple{background:rgba(155,89,182,.25);border-color:rgba(155,89,182,.5);box-shadow:0 2px 12px rgba(155,89,182,.15)}
+.kpi.c-green{background:rgba(34,201,122,.22);border-color:rgba(34,201,122,.45);box-shadow:0 2px 12px rgba(34,201,122,.12)}
+.kpi.c-blue{background:rgba(91,163,232,.22);border-color:rgba(91,163,232,.45);box-shadow:0 2px 12px rgba(91,163,232,.12)}
+.kpi.c-teal{background:rgba(90,245,184,.18);border-color:rgba(90,245,184,.4);box-shadow:0 2px 12px rgba(90,245,184,.1)}
+.kpi.c-red{background:rgba(255,92,92,.2);border-color:rgba(255,92,92,.4);box-shadow:0 2px 12px rgba(255,92,92,.1)}
+.kpi.c-yellow{background:rgba(240,168,50,.22);border-color:rgba(240,168,50,.45);box-shadow:0 2px 12px rgba(240,168,50,.12)}
+.kpi-lbl{font-size:10px;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;font-weight:600}
+.kpi-val{font-size:25px;font-weight:700;color:#ffffff;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.3)}
+.kpi-sub{font-size:10px;color:rgba(255,255,255,.5);margin-top:5px}
 
 /* CARD */
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden}
@@ -192,6 +193,8 @@ canvas{display:block}
 @media(max-width:700px){.kpi-row{grid-template-columns:repeat(2,1fr)}.charts4{grid-template-columns:1fr}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script>
 const SUPA_URL = 'https://hseluvpwqjgallfyzori.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzZWx1dnB3cWpnYWxsZnl6b3JpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MjIxNjgsImV4cCI6MjA5MTI5ODE2OH0.hZ57PMADQPaqISd5ugWozVDQQHiR61aoPSQp1-mP-6s';
@@ -202,7 +205,10 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 <!-- TOPBAR -->
 <header class="topbar">
-  <div class="logo">LATHOS <em>Academy</em></div>
+  <div class="logo" style="display:flex;align-items:baseline;gap:4px;">
+    <span style="font-family:'Georgia',serif;font-size:18px;font-weight:700;letter-spacing:.06em;color:#fff;">LATHOS</span>
+    <span style="font-size:9px;font-weight:500;color:#b8922e;padding-bottom:1px;">®</span>
+  </div>
   <nav class="nav">
     <button class="nav-btn act" data-v="dashboard" onclick="show('dashboard',this)">Dashboard</button>
     <button class="nav-btn" data-v="ventas" onclick="show('ventas',this)">Todas las ventas</button>
@@ -1730,6 +1736,296 @@ ge('modalBg').addEventListener('click',function(e){if(e.target===this)closeModal
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeModal();closeDetModal();}});
 window.addEventListener('resize',function(){drawCharts();drawEvo();});
 setEvo('day');
+
+// ─────────────────────────────────────────────────────────────
+// PDF EXPORT
+// ─────────────────────────────────────────────────────────────
+function getPeriodLabel() {
+  var labels = {
+    all: 'Todos los datos', today: 'Hoy', yesterday: 'Ayer',
+    '3d': 'Últimos 3 días', week: 'Esta semana', lastweek: 'Semana pasada',
+    '7d': 'Últimos 7 días', '14d': 'Últimos 14 días',
+    month: 'Este mes', lastmonth: 'Mes pasado', '30d': 'Últimos 30 días'
+  };
+  if (activePeriod === 'custom') {
+    var from = ge('fFrom').value, to = ge('fTo').value;
+    if (from && to) return 'Del ' + fmtD(from) + ' al ' + fmtD(to);
+    return 'Rango personalizado';
+  }
+  return labels[activePeriod] || activePeriod;
+}
+
+function downloadDetPDF() {
+  var isDrill = ge('detDrillView').style.display !== 'none';
+  if (isDrill) { downloadDrillPDF(); return; }
+  downloadSummaryPDF();
+}
+
+function downloadSummaryPDF() {
+  var type = _detType;
+  var titles = { closer:'Cash por Closer', setter:'Cash por Setter', source:'Cash por Source', utm:'Cash por UTM Term' };
+  var title = titles[type] || 'Reporte';
+  var period = getPeriodLabel();
+  var today = new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' });
+
+  // Build data
+  var map = {}, totalCash = 0, totalVentas = 0;
+  filtered.forEach(function(s) {
+    if (s.refund === 'yes') return;
+    var key;
+    if (type==='closer') key = s.closer||'Sin closer';
+    else if (type==='setter') key = s.setter||'Sin setter';
+    else if (type==='source') key = s.source||'Otro';
+    else if (type==='utm') key = s.utm||'Sin UTM';
+    if (!key) return;
+    if (!map[key]) map[key] = { cash:0, ventas:0 };
+    var c = parseFloat(s.cash) || 0;
+    map[key].cash += c; map[key].ventas++; totalCash += c; totalVentas++;
+  });
+  var keys = Object.keys(map).sort(function(a,b){ return map[b].cash - map[a].cash; });
+
+  var { jsPDF } = window.jspdf;
+  var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  var W = 210, margin = 20;
+
+  // Background
+  doc.setFillColor(242, 241, 238);
+  doc.rect(0, 0, W, 297, 'F');
+
+  // Gold top bar
+  doc.setFillColor(184, 146, 46);
+  doc.rect(margin, 18, W - margin*2, 0.5, 'F');
+
+  // Logo
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(17, 17, 16);
+  doc.text('LATHOS', margin, 15);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(184, 146, 46);
+  doc.text('®', margin + 33, 13);
+
+  // Header right
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(136, 136, 134);
+  doc.text(title, W - margin, 10, { align:'right' });
+  doc.text(period, W - margin, 14, { align:'right' });
+  doc.text('Generado: ' + today, W - margin, 18, { align:'right' });
+
+  var y = 26;
+
+  // Title
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.setTextColor(17, 17, 16);
+  doc.text(title, margin, y); y += 5;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(136, 136, 134);
+  doc.text('Período: ' + period, margin, y); y += 8;
+
+  // KPI cards
+  var kpiW = (W - margin*2 - 8) / 3;
+  var kpiData = [
+    { label:'CC TOTAL', value: (totalCash).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'€', color:[184,146,46] },
+    { label:'VENTAS', value: String(totalVentas), color:[17,17,16] },
+    { label:'TICKET PROMEDIO', value: totalVentas ? (totalCash/totalVentas).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'€' : '—', color:[17,17,16] }
+  ];
+  kpiData.forEach(function(k, i) {
+    var x = margin + i*(kpiW+4);
+    doc.setFillColor(255,255,255);
+    doc.roundedRect(x, y, kpiW, 16, 2, 2, 'F');
+    doc.setDrawColor(221,220,218);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(x, y, kpiW, 16, 2, 2, 'S');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(136,136,134);
+    doc.text(k.label, x+4, y+5);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(k.color[0], k.color[1], k.color[2]);
+    doc.text(k.value, x+4, y+12);
+  });
+  y += 22;
+
+  // Section label
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(136,136,134);
+  doc.text('DESGLOSE', margin, y); y += 4;
+
+  // Table
+  var tableData = keys.map(function(k) {
+    var d = map[k];
+    var pct = totalCash ? Math.round(d.cash/totalCash*100) : 0;
+    var avg = d.ventas ? Math.round(d.cash/d.ventas) : 0;
+    return [
+      k,
+      String(d.ventas),
+      d.cash.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'€',
+      pct+'%',
+      avg.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'€'
+    ];
+  });
+  // Total row
+  tableData.push([
+    'TOTAL', String(totalVentas),
+    totalCash.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'€',
+    '100%',
+    (totalVentas ? totalCash/totalVentas : 0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'€'
+  ]);
+
+  doc.autoTable({
+    startY: y,
+    head: [['Nombre', 'Ventas', 'CC Generado', '% Total', 'Ticket Avg']],
+    body: tableData,
+    theme: 'plain',
+    styles: { font:'helvetica', fontSize:9, cellPadding:3, textColor:[51,51,51], fillColor:[242,241,238] },
+    headStyles: { fillColor:[17,17,16], textColor:[242,241,238], fontSize:8, fontStyle:'bold', cellPadding:3 },
+    alternateRowStyles: { fillColor:[234,233,229] },
+    foot: [],
+    didDrawRow: function(data) {
+      if (data.row.index === tableData.length - 1) {
+        data.row.cells[0].styles = { fontStyle:'bold', textColor:[17,17,16] };
+        data.row.cells[2].styles = { fontStyle:'bold', textColor:[184,146,46] };
+      }
+    },
+    margin: { left: margin, right: margin },
+    columnStyles: {
+      0: { cellWidth:'auto' },
+      1: { halign:'center' },
+      2: { halign:'right', textColor:[17,17,16], fontStyle:'bold' },
+      3: { halign:'center' },
+      4: { halign:'right' }
+    }
+  });
+
+  var finalY = doc.lastAutoTable.finalY + 8;
+
+  // Gold bottom line
+  doc.setFillColor(184, 146, 46);
+  doc.rect(margin, finalY, W - margin*2, 0.4, 'F');
+  finalY += 5;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(136,136,134);
+  doc.text('Uso exclusivo equipo comercial · Lathos Academy', W/2, finalY, { align:'center' });
+
+  var fname = title.toLowerCase().replace(/ /g,'_') + '_' + new Date().toISOString().slice(0,10) + '.pdf';
+  doc.save(fname);
+}
+
+function downloadDrillPDF() {
+  var type = _detType;
+  var key = ge('detModalTitle').textContent;
+  var period = getPeriodLabel();
+  var today = new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' });
+
+  var ventas = filtered.filter(function(s) {
+    if (s.refund === 'yes') return false;
+    if (type==='closer') return (s.closer||'Sin closer') === key;
+    if (type==='setter') return (s.setter||'Sin setter') === key;
+    if (type==='source') return (s.source||'Otro') === key;
+    if (type==='utm') return (s.utm||'Sin UTM') === key;
+    return false;
+  });
+  ventas.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
+  var totalCash = ventas.reduce(function(s,v){ return s + (parseFloat(v.cash)||0); }, 0);
+
+  var { jsPDF } = window.jspdf;
+  var doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+  var W = 297, margin = 18;
+
+  doc.setFillColor(242, 241, 238);
+  doc.rect(0, 0, W, 210, 'F');
+
+  doc.setFillColor(184, 146, 46);
+  doc.rect(margin, 18, W - margin*2, 0.5, 'F');
+
+  // Logo
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(17, 17, 16);
+  doc.text('LATHOS', margin, 15);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(184, 146, 46);
+  doc.text('®', margin + 33, 13);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(136, 136, 134);
+  doc.text('Detalle de ventas', W - margin, 10, { align:'right' });
+  doc.text(period, W - margin, 14, { align:'right' });
+  doc.text('Generado: ' + today, W - margin, 18, { align:'right' });
+
+  var y = 26;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.setTextColor(17, 17, 16);
+  doc.text(key, margin, y); y += 5;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(136, 136, 134);
+  doc.text(ventas.length + ' ventas · CC: ' + totalCash.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2}) + '€ · Período: ' + period, margin, y); y += 8;
+
+  var tableData = ventas.map(function(s) {
+    return [
+      fmtD(s.fecha),
+      s.nombre||'—',
+      s.closer||'—',
+      s.setter||'—',
+      s.source||'—',
+      s.utm||'—',
+      s.deal||'—',
+      (parseFloat(s.revenue)||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'€',
+      (parseFloat(s.cash)||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'€',
+      s.tipoPago||'—'
+    ];
+  });
+
+  doc.autoTable({
+    startY: y,
+    head: [['Fecha','Nombre','Closer','Setter','Source','UTM','Deal','Revenue','Cash','Pago']],
+    body: tableData,
+    theme: 'plain',
+    styles: { font:'helvetica', fontSize:8, cellPadding:2.5, textColor:[51,51,51], fillColor:[242,241,238] },
+    headStyles: { fillColor:[17,17,16], textColor:[242,241,238], fontSize:7.5, fontStyle:'bold', cellPadding:2.5 },
+    alternateRowStyles: { fillColor:[234,233,229] },
+    columnStyles: {
+      0: { cellWidth:16 },
+      1: { cellWidth:35 },
+      2: { cellWidth:20 },
+      3: { cellWidth:20 },
+      4: { cellWidth:18 },
+      5: { cellWidth:'auto' },
+      6: { cellWidth:18 },
+      7: { halign:'right', cellWidth:22 },
+      8: { halign:'right', cellWidth:22, textColor:[0,120,50], fontStyle:'bold' },
+      9: { cellWidth:20 }
+    },
+    margin: { left: margin, right: margin }
+  });
+
+  var finalY = doc.lastAutoTable.finalY + 8;
+  doc.setFillColor(184, 146, 46);
+  doc.rect(margin, finalY, W - margin*2, 0.4, 'F');
+  finalY += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(136, 136, 134);
+  doc.text('Uso exclusivo equipo comercial · Lathos Academy', W/2, finalY, { align:'center' });
+
+  var fname = key.toLowerCase().replace(/[^a-z0-9]/g,'_') + '_detalle_' + new Date().toISOString().slice(0,10) + '.pdf';
+  doc.save(fname);
+}
+
 </script>
 
 <!-- MODAL UTM DETAIL -->
@@ -1752,6 +2048,9 @@ setEvo('day');
       <div style="display:flex;align-items:center;gap:10px">
         <button class="btn btn-ghost" id="detBackBtn" style="display:none;font-size:12px" onclick="closeDrillDown()">← Volver</button>
         <span class="det-modal-title" id="detModalTitle">Detalle</span>
+        <button id="pdfSummaryBtn" onclick="downloadDetPDF()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;background:#b8922e;color:#fff;font-size:11px;font-weight:600;border:none;cursor:pointer;letter-spacing:.04em;">
+          ↓ Descargar PDF
+        </button>
       </div>
       <button class="btn btn-ghost" onclick="closeDetModal()">✕</button>
     </div>
