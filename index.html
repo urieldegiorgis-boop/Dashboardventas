@@ -458,6 +458,17 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
     <div class="card-body"><div id="setterFijosList"></div></div>
   </div>
 
+  <!-- % FIJO CASH POR CLOSER -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">% Fijo sobre Cash por Closer</span>
+    </div>
+    <div class="card-body">
+      <p style="font-size:11px;color:var(--t2);margin-bottom:12px">Closers con % fijo ignoran los tramos. El resto sigue con tramos normales.</p>
+      <div id="closerFlatPctList"></div>
+    </div>
+  </div>
+
   <!-- BONUS POR PERIODO -->
   <div class="card">
     <div class="card-head">
@@ -542,7 +553,9 @@ var CFG={
 var comCfg={
   closerTiers:[{until:20000,pct:6},{until:30000,pct:7},{until:40000,pct:8},{until:50000,pct:9},{until:999999,pct:10}],
   setterTiers:[{until:18000,pct:4},{until:28000,pct:5},{until:999999,pct:6}],
-  setterFijos:{}
+  setterFijos:{},
+  setterFlatPct:{},
+  closerFlatPct:{}
 };
 var bonusByWeek={};
 var sales=[],filtered=[],eid=null,nid=1;
@@ -615,6 +628,8 @@ async function loadData(){
         if(p.comCfg.closerTiers&&p.comCfg.closerTiers.length>2)comCfg.closerTiers=p.comCfg.closerTiers;
         if(p.comCfg.setterTiers&&p.comCfg.setterTiers.length>1)comCfg.setterTiers=p.comCfg.setterTiers;
         if(p.comCfg.setterFijos)comCfg.setterFijos=p.comCfg.setterFijos;
+        if(p.comCfg.setterFlatPct)comCfg.setterFlatPct=p.comCfg.setterFlatPct;
+        if(p.comCfg.closerFlatPct)comCfg.closerFlatPct=p.comCfg.closerFlatPct;
       }
       if(p.bonusByWeek)bonusByWeek=p.bonusByWeek;
     }
@@ -684,8 +699,18 @@ function fmt(n){return(parseFloat(n)||0).toLocaleString('es-ES',{minimumFraction
 function fmtD(d){if(!d)return'--';var p=d.split('-');return(p[2]||'?')+'/'+(p[1]||'?')+'/'+(p[0]||'?').slice(2);}
 function pct(a,b){return b?Math.round(a/b*100)+'%':'0%';}
 function getPct(cash,tiers){var s=tiers.slice().sort(function(a,b){return a.until-b.until;});for(var i=0;i<s.length;i++)if(cash<=s[i].until)return s[i].pct/100;return s[s.length-1].pct/100;}
-function getCP(c){return getPct(c,comCfg.closerTiers);}
-function getSP(c){return getPct(c,comCfg.setterTiers);}
+function getCP(c,name){
+  if(name&&comCfg.closerFlatPct&&comCfg.closerFlatPct[name]!=null&&comCfg.closerFlatPct[name]!==''){
+    return comCfg.closerFlatPct[name]/100;
+  }
+  return getPct(c,comCfg.closerTiers);
+}
+function getSP(c,name){
+  if(name&&comCfg.setterFlatPct&&comCfg.setterFlatPct[name]!=null&&comCfg.setterFlatPct[name]!==''){
+    return comCfg.setterFlatPct[name]/100;
+  }
+  return getPct(c,comCfg.setterTiers);
+}
 function weekKey(dateStr){var d=dateStr?new Date(dateStr):new Date();var jan=new Date(d.getFullYear(),0,1);var w=Math.ceil(((d-jan)/86400000+jan.getDay()+1)/7);return d.getFullYear()+'-W'+String(w).padStart(2,'0');}
 
 // ── RENDER ────────────────────────────────────────────────────────────────
@@ -709,7 +734,7 @@ function calcKPIs(arr){
   arr.forEach(function(s){
     if(s.refund==='yes'){refA+=parseFloat(s.cash)||0;refC++;return;}
     pay++;var c=parseFloat(s.cash)||0;cash+=c;rev+=parseFloat(s.revenue)||0;
-    com+=c*(s.closer&&s.closer!=='No Closer'?getCP(c):0);
+    com+=c*(s.closer&&s.closer!=='No Closer'?getCP(c,s.closer):0);
   });
   return{pay,cash,rev,refA,refC,com};
 }
@@ -798,7 +823,7 @@ function renderTables(){
   cls.forEach(function(c){var d=cm[c];tot.p+=d.p;tot.cash+=d.cash;tot.rev+=d.rev;tot.refA+=d.refA;tot.refC+=d.refC;tot.spain+=d.spain;});
   cls.forEach(function(c){
     var d=cm[c];
-    var cCom=d.cash*getCP(d.cash);
+    var cCom=d.cash*getCP(d.cash,c);
     var cBonus=getBonusForPeriod(c);
     var cTotal=cCom+cBonus; // closers no tienen fijo mensual
     var tr=document.createElement('tr');
@@ -824,7 +849,7 @@ function renderTables(){
   sts.forEach(function(c){var d=sm[c];tot2.p+=d.p;tot2.cash+=d.cash;tot2.rev+=d.rev;tot2.refA+=d.refA;tot2.refC+=d.refC;});
   sts.forEach(function(c){
     var d=sm[c];
-    var sCom=d.cash*getSP(d.cash);
+    var sCom=d.cash*getSP(d.cash,c);
     var sFijo=comCfg.setterFijos[c]||0;
     var sBonus=getBonusForPeriod(c);
     var sTotal=sCom+sFijo+sBonus;
@@ -1310,7 +1335,7 @@ function populateSels(){
 function renderConfig(){
   ['closers','setters','sources','pagos'].forEach(renderPersonList);
   renderTiers('closer');renderTiers('setter');
-  renderSetterFijosList();
+  renderSetterFijosList();renderCloserFlatPctList();
   if(!ge('bonusFrom').value){ge('bonusFrom').value=soM();ge('bonusTo').value=td();}
   renderBonusTable();renderLiquidacion();
 }
@@ -1378,6 +1403,58 @@ function renderSetterFijosList(){
 function saveSetterFijos(){
   CFG.setters.filter(function(n){return n!=='No Setter';}).forEach(function(name){var k=name.replace(/[^a-z0-9]/gi,'_'),el=ge('sfijo-'+k);if(el)comCfg.setterFijos[name]=parseFloat(el.value)||0;});
   saveData();toast('Fijos guardados ✓');render();
+}
+function renderCloserFlatPctList(){
+  var el=ge('closerFlatPctList');if(!el)return;el.innerHTML='';
+  var entries=Object.keys(comCfg.closerFlatPct);
+  if(!entries.length){
+    el.innerHTML='<p style="font-size:12px;color:var(--t3);margin-bottom:10px">Ningún closer con % fijo aún.</p>';
+  } else {
+    entries.forEach(function(name){
+      var k=name.replace(/[^a-z0-9]/gi,'_');
+      var v=comCfg.closerFlatPct[name];
+      var div=document.createElement('div');
+      div.style.cssText='display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:9px 12px;margin-bottom:6px';
+      div.innerHTML='<span style="flex:1;font-weight:600">'+esc(name)+'</span>'
+        +'<span style="color:var(--t2);font-size:12px">% fijo</span>'
+        +'<input type="number" min="0" max="100" step="0.5" value="'+v+'" id="cfpct-'+k+'"'
+        +' style="width:80px;background:var(--bg2);border:1px solid var(--border2);color:var(--t1);padding:5px 9px;border-radius:5px;font-size:12px;font-family:var(--font);outline:none;text-align:right">'
+        +'<span style="color:var(--t3);font-size:12px">%</span>'
+        +'<button class="btn btn-ghost" style="padding:3px 8px;font-size:11px" onclick="saveOneCloserFlatPct(\''+name+'\')">Guardar</button>'
+        +'<button class="del-btn" onclick="removeCloserFlatPct(\''+name+'\')">×</button>';
+      el.appendChild(div);
+    });
+  }
+  // Selector para añadir
+  var available=CFG.closers.filter(function(n){return n!=='No Closer'&&comCfg.closerFlatPct[n]==null;});
+  var addDiv=document.createElement('div');
+  addDiv.style.cssText='display:flex;gap:8px;margin-top:8px;align-items:center';
+  addDiv.innerHTML='<select id="cfpct-new-name" style="flex:1;background:var(--bg3);border:1px solid var(--border2);color:var(--t1);padding:6px 8px;border-radius:5px;font-size:12px;font-family:var(--font)">'
+    +'<option value="">Seleccionar closer...</option>'
+    +available.map(function(n){return'<option value="'+esc(n)+'">'+esc(n)+'</option>';}).join('')
+    +'</select>'
+    +'<input type="number" min="0" max="100" step="0.5" placeholder="%" id="cfpct-new-val"'
+    +' style="width:80px;background:var(--bg3);border:1px solid var(--border2);color:var(--t1);padding:6px 9px;border-radius:5px;font-size:12px;font-family:var(--font);outline:none;text-align:right">'
+    +'<span style="color:var(--t3);font-size:12px">%</span>'
+    +'<button class="btn btn-primary" onclick="addCloserFlatPct()">Agregar</button>';
+  el.appendChild(addDiv);
+}
+function addCloserFlatPct(){
+  var name=ge('cfpct-new-name').value,v=ge('cfpct-new-val').value.trim();
+  if(!name){toast('Selecciona un closer');return;}
+  if(v===''||isNaN(parseFloat(v))){toast('Introduce un % válido');return;}
+  comCfg.closerFlatPct[name]=parseFloat(v);
+  saveData();renderCloserFlatPctList();toast(name+' → '+v+'% fijo ✓');render();
+}
+function saveOneCloserFlatPct(name){
+  var k=name.replace(/[^a-z0-9]/gi,'_'),el=ge('cfpct-'+k);
+  if(!el)return;
+  comCfg.closerFlatPct[name]=parseFloat(el.value)||0;
+  saveData();renderCloserFlatPctList();toast(name+' actualizado ✓');render();
+}
+function removeCloserFlatPct(name){
+  delete comCfg.closerFlatPct[name];
+  saveData();renderCloserFlatPctList();toast(name+' vuelve a tramos');render();
 }
 // ── BONUS LOGIC ──────────────────────────────────────────────────────────
 function getWeeksInRange(from, to){
@@ -1486,7 +1563,7 @@ function renderLiquidacion(){
   filtered.forEach(function(s){if(s.refund==='yes')return;var cash=parseFloat(s.cash)||0;if(s.closer&&s.closer!=='No Closer')cc[s.closer]=(cc[s.closer]||0)+cash;if(s.setter&&s.setter!=='No Setter')sc[s.setter]=(sc[s.setter]||0)+cash;});
   var wk=weekKey(td()),bd=bonusByWeek[wk]||{},rows='',grand=0;
   function mkrow(name,role,cash){
-    var p=role==='Closer'?getCP(cash):getSP(cash);
+    var p=role==='Closer'?getCP(cash,name):getSP(cash,name);
     var com=cash*p;
     var fijo=role==='Setter'?(comCfg.setterFijos[name]||0):0;
     var bonus=getBonusForPeriod(name);
