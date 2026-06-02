@@ -9,7 +9,7 @@
 :root{
   --bg:#0d0d0d;--bg2:#161616;--bg3:#1f1f1f;--bg4:#282828;
   --border:#2a2a2a;--border2:#383838;
-  --t1:#f0f2f8;--t2:#b8bfd4;--t3:#b8bfd4;
+  --t1:#f0f2f8;--t2:#e8eaf0;--t3:#c8cdd8;
   --green:#4caf7d;--red:#e05c5c;--yellow:#f0b429;--blue:#4f8ef7;--purple:#9b59b6;--teal:#5af5b8;
   --accent:#4f8ef7;--font:'Inter',system-ui,sans-serif;
 }
@@ -25,6 +25,9 @@ html,body{background:var(--bg);color:var(--t1);font-family:var(--font);font-size
 .nav-btn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;color:var(--t2);background:none;border:none;transition:all .12s}
 .nav-btn:hover{color:var(--t1);background:var(--bg3)}
 .nav-btn.act{color:#fff;background:var(--accent)}
+.nav-btn-nueva{padding:6px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:#0d0d0d;background:#4caf7d;border:none;transition:all .12s;margin-left:8px}
+.nav-btn-nueva:hover{background:#3d9e6e;color:#fff}
+.nav-btn-nueva.act{background:#3d9e6e;color:#fff;outline:2px solid rgba(76,175,125,.4)}
 .topbar-r{display:flex;gap:8px;align-items:center;margin-left:auto}
 .btn{padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:500;font-family:var(--font);transition:all .12s}
 .btn-ghost{background:var(--bg3);color:var(--t2);border:1px solid var(--border2)}
@@ -42,12 +45,13 @@ html,body{background:var(--bg);color:var(--t1);font-family:var(--font);font-size
 .fbar label{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
 .fg{display:flex;align-items:center;gap:5px}
 .fsep{width:1px;height:18px;background:var(--border)}
-select,input[type=date],input[type=text],input[type=number],input[type=email]{background:var(--bg3);border:1px solid var(--border2);color:var(--t1);padding:5px 8px;border-radius:5px;font-size:12px;font-family:var(--font);outline:none}
+select,input[type=date],input[type=text],input[type=number],input[type=email]{background:var(--bg3);border:1px solid var(--border2);color:#fff;padding:5px 8px;border-radius:5px;font-size:12px;font-family:var(--font);outline:none}
+select option{background:var(--bg3);color:#fff;}
 select:focus,input:focus{border-color:var(--accent)}
 
 /* PERIOD TABS */
 .ptabs{display:flex;gap:4px;flex-wrap:wrap}
-.ptab{padding:5px 10px;border-radius:5px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:#b8bfd4;transition:all .12s}
+.ptab{padding:5px 10px;border-radius:5px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--t2);transition:all .12s}
 .ptab:hover{color:#fff}
 .ptab.act{background:#fff;color:#0d0d0d;border-color:#fff;font-weight:700}
 
@@ -212,10 +216,12 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
   <nav class="nav">
     <button class="nav-btn act" data-v="dashboard" onclick="show('dashboard',this)">Dashboard</button>
     <button class="nav-btn" data-v="ventas" onclick="show('ventas',this)">Todas las ventas</button>
-    <button class="nav-btn" data-v="nueva" onclick="show('nueva',this)">+ Nueva venta</button>
+    <button class="nav-btn-nueva" data-v="nueva" onclick="show('nueva',this)">+ Nueva venta</button>
+  </nav>
+  <div style="display:flex;gap:3px;margin-left:auto">
     <button class="nav-btn" data-v="config" onclick="show('config',this)">⚙ Config</button>
     <button class="nav-btn" data-v="balance" onclick="show('balance',this)">📊 Balance</button>
-  </nav>
+  </div>
   <div class="topbar-r">
     <span id="totalTag" style="font-size:11px;color:var(--t3)">—</span>
     <button class="btn btn-ghost" onclick="document.getElementById('csvInput').click()">⬆ Importar CSV</button>
@@ -2142,7 +2148,7 @@ function renderBalance(){
   var cur=calcKPIs(filtered);
   var rEl=document.getElementById('balInRev'); if(rEl) rEl.value=Math.round(cur.rev);
   var cEl=document.getElementById('balInCash'); if(cEl) cEl.value=Math.round(cur.cash);
-  var espRev=filtered.filter(function(s){return s.pais==='Spain'||s.pais==='España';})
+  var espRev=filtered.filter(function(s){return (s.pais==='Spain'||s.pais==='España')&&s.refund!=='yes';})
     .reduce(function(a,s){return a+(parseFloat(s.revenue)||0);},0);
   var eEl=document.getElementById('balInEsp'); if(eEl) eEl.value=Math.round(espRev);
 
