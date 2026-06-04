@@ -380,7 +380,14 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
       <div class="field"><label>Tipo de Pago</label><select id="fPago2"></select></div>
       <div class="field"><label>Offer</label><select id="fOffer3" style="display:none"></select></div>
       <div class="field full"><label>TXID / Justificante</label><input id="fTxid" placeholder="HP1234567..."></div>
-      <div class="field full"><label>Comprobante</label><input id="fNotas" placeholder="URL o referencia..."></div>
+      <div class="field full"><label>Comprobante</label>
+        <div id="fCompBox" style="border:2px dashed var(--border2);border-radius:7px;padding:12px;text-align:center;cursor:pointer;transition:border-color .2s;background:var(--bg2)" onclick="ge('fCompFile').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border2)'" ondrop="event.preventDefault();this.style.borderColor='var(--border2)';handleCompDrop(event,'f')">
+          <div id="fCompPreview" style="display:none;margin-bottom:8px"><img id="fCompImg" style="max-height:80px;max-width:100%;border-radius:4px;object-fit:contain"></div>
+          <div id="fCompStatus" style="font-size:12px;color:var(--t3)">📎 Clic o arrastrá una imagen aquí</div>
+          <input id="fCompFile" type="file" accept="image/*" style="display:none" onchange="uploadComp(this,'f')">
+        </div>
+        <input id="fNotas" type="hidden">
+      </div>
     </div>
     <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end">
       <button class="btn btn-ghost" onclick="resetForm()">Limpiar</button>
@@ -646,7 +653,14 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
       <div class="field"><label>Tipo de Pago</label><select id="mPago"></select></div>
       <div class="field"><label>Refund</label><select id="mRefund"><option value="no">No</option><option value="yes">Sí — Refund</option></select></div>
       <div class="field full"><label>TXID / Justificante</label><input id="mTxid"></div>
-      <div class="field full"><label>Comprobante</label><input id="mNotas"></div>
+      <div class="field full"><label>Comprobante</label>
+        <div id="mCompBox" style="border:2px dashed var(--border2);border-radius:7px;padding:12px;text-align:center;cursor:pointer;transition:border-color .2s;background:var(--bg2)" onclick="ge('mCompFile').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border2)'" ondrop="event.preventDefault();this.style.borderColor='var(--border2)';handleCompDrop(event,'m')">
+          <div id="mCompPreview" style="display:none;margin-bottom:8px"><img id="mCompImg" style="max-height:80px;max-width:100%;border-radius:4px;object-fit:contain"></div>
+          <div id="mCompStatus" style="font-size:12px;color:var(--t3)">📎 Clic o arrastrá una imagen aquí</div>
+          <input id="mCompFile" type="file" accept="image/*" style="display:none" onchange="uploadComp(this,'m')">
+        </div>
+        <input id="mNotas" type="hidden">
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-danger" onclick="delSale()" style="margin-right:auto">Eliminar</button>
@@ -1395,7 +1409,20 @@ function drawEvo(){
 }
 
 // ── VIEWS ─────────────────────────────────────────────────────────────────
+var _authSessions = {};
+function checkAuth(v, btn){
+  if(_authSessions[v]) return true;
+  var pw = prompt('🔒 Contraseña requerida para acceder a ' + (v==='config'?'Configuración':'Balance') + ':');
+  if(pw === 'Lathos2026'){
+    _authSessions[v] = true;
+    return true;
+  }
+  if(pw !== null) toast('Contraseña incorrecta');
+  return false;
+}
+
 function show(v,btn){
+  if((v==='config'||v==='balance') && !checkAuth(v,btn)) return;
   document.querySelectorAll('.view').forEach(function(el){el.classList.remove('act');});
   document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('act');});
   ge('v-'+v).classList.add('act');
@@ -1455,6 +1482,7 @@ function openEdit(id){
   ge('mRevenue').value=s.revenue||'';ge('mCash').value=s.cash||'';
   ge('mPago').value=s.tipoPago||'';ge('mRefund').value=s.refund||'no';
   ge('mTxid').value=s.txid||'';ge('mNotas').value=s.notas||'';
+  loadComprobante('m', s.notas||'');
   ge('modalBg').classList.add('open');
 }
 function closeModal(){ge('modalBg').classList.remove('open');eid=null;}
@@ -1488,6 +1516,10 @@ async function delSale(){
 // ── NUEVA VENTA ──────────────────────────────────────────────────────────
 function resetForm(){
   ['fNombre','fEmail','fUtm','fTxid','fNotas'].forEach(function(id){ge(id).value='';});
+  var fs=ge('fCompStatus'),fp=ge('fCompPreview'),ff=ge('fCompFile');
+  if(fs){fs.textContent='📎 Clic o arrastrá una imagen aquí';fs.style.color='var(--t3)';}
+  if(fp)fp.style.display='none';
+  if(ff)ff.value='';;
   ge('fPais').value='Spain';ge('fFecha').value=td();
   ge('fRevenue').value='';ge('fCash').value='';ge('formOk').style.display='none';
   ['fCloser2','fSetter2','fSource2','fColdCaller2','fDeal2','fOffer2','fPago2'].forEach(function(id){if(ge(id))ge(id).value='';});
@@ -1532,7 +1564,95 @@ function populateSels(){
   fillSel('mOffer',CFG.offers);fillSel('mPago',CFG.pagos);
 }
 
-// ── CONFIG ────────────────────────────────────────────────────────────────
+// ── COMPROBANTE DRIVE UPLOAD ─────────────────────────────────────────────
+var DRIVE_FOLDER_ID = '1P-YtblKF6dLCbrjaSdtHl6Z0CcBHdUOB'; // Comprobantes folder
+
+function handleCompDrop(e, prefix){
+  var file = e.dataTransfer.files[0];
+  if(file) uploadCompFile(file, prefix);
+}
+
+function uploadComp(input, prefix){
+  var file = input.files[0];
+  if(file) uploadCompFile(file, prefix);
+}
+
+function uploadCompFile(file, prefix){
+  var statusEl = ge(prefix+'CompStatus');
+  var previewEl = ge(prefix+'CompPreview');
+  var imgEl = ge(prefix+'CompImg');
+  var notasEl = ge(prefix+'Notas');
+
+  if(!file.type.startsWith('image/')){toast('Solo se permiten imágenes');return;}
+  if(file.size > 10*1024*1024){toast('Imagen demasiado grande (máx 10MB)');return;}
+
+  statusEl.textContent = '⏳ Subiendo a Drive...';
+  statusEl.style.color = 'var(--accent)';
+
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var base64 = e.target.result.split(',')[1];
+    var mimeType = file.type;
+    var fileName = 'comp_' + new Date().toISOString().slice(0,10) + '_' + file.name;
+
+    // Show preview immediately
+    imgEl.src = e.target.result;
+    previewEl.style.display = 'block';
+
+    // Upload via Anthropic API calling Drive MCP
+    fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        mcp_servers: [{type:'url', url:'https://drivemcp.googleapis.com/mcp/v1', name:'gdrive'}],
+        messages: [{
+          role: 'user',
+          content: 'Upload this file to Google Drive folder ID "'+DRIVE_FOLDER_ID+'". Title: "'+fileName+'". Base64 content: "'+base64+'". Content mime type: "'+mimeType+'". Disable conversion to Google type. Reply with ONLY the JSON: {"id":"...","viewUrl":"..."}. Nothing else.'
+        }]
+      })
+    })
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var text = (data.content||[]).map(function(c){return c.text||'';}).join('');
+      var match = text.match(/\{[^}]*"id"\s*:\s*"([^"]+)"[^}]*"viewUrl"\s*:\s*"([^"]+)"[^}]*\}/);
+      if(!match) match = text.match(/"id"\s*:\s*"([^"]+)"/);
+      if(match){
+        var fileId = match[1];
+        var viewUrl = 'https://drive.google.com/file/d/'+fileId+'/view';
+        notasEl.value = viewUrl;
+        statusEl.innerHTML = '✓ Subido — <a href="'+viewUrl+'" target="_blank" style="color:var(--accent)">Ver en Drive</a>';
+        statusEl.style.color = 'var(--green)';
+        toast('Comprobante subido a Drive ✓');
+      } else {
+        statusEl.textContent = '⚠ Error al subir. Guardando link local.';
+        statusEl.style.color = 'var(--yellow)';
+        notasEl.value = 'local:'+file.name;
+      }
+    })
+    .catch(function(){
+      statusEl.textContent = '⚠ Sin conexión a Drive. Vista previa guardada.';
+      statusEl.style.color = 'var(--yellow)';
+      notasEl.value = 'local:'+file.name;
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+// Load existing comprobante into edit modal
+function loadComprobante(prefix, url){
+  if(!url) return;
+  var notasEl = ge(prefix+'Notas');
+  var statusEl = ge(prefix+'CompStatus');
+  var previewEl = ge(prefix+'CompPreview');
+  var imgEl = ge(prefix+'CompImg');
+  if(notasEl) notasEl.value = url;
+  if(url.startsWith('https://drive.google.com') && statusEl){
+    statusEl.innerHTML = '✓ Comprobante guardado — <a href="'+url+'" target="_blank" style="color:var(--accent)">Ver en Drive</a>';
+    statusEl.style.color = 'var(--green)';
+  }
+}
 function renderConfig(){
   ['closers','setters','sources','cold_callers','pagos'].forEach(renderPersonList);
   renderTiers('closer');renderTiers('setter');renderTiers('coldCaller');
