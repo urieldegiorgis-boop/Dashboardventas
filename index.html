@@ -764,9 +764,9 @@ async function loadData(){
       var p=JSON.parse(d);
       if(p.CFG){CFG.closers=p.CFG.closers||CFG.closers;CFG.setters=p.CFG.setters||CFG.setters;CFG.sources=p.CFG.sources||CFG.sources;CFG.pagos=p.CFG.pagos||CFG.pagos;CFG.cold_callers=p.CFG.cold_callers||CFG.cold_callers;}
       if(p.comCfg){
-        if(p.comCfg.closerTiers&&p.comCfg.closerTiers.length>2)comCfg.closerTiers=p.comCfg.closerTiers;
-        if(p.comCfg.setterTiers&&p.comCfg.setterTiers.length>1)comCfg.setterTiers=p.comCfg.setterTiers;
-        if(p.comCfg.coldCallerTiers&&p.comCfg.coldCallerTiers.length>0)comCfg.coldCallerTiers=p.comCfg.coldCallerTiers;
+        if(p.comCfg.closerTiers&&Array.isArray(p.comCfg.closerTiers))comCfg.closerTiers=p.comCfg.closerTiers;
+        if(p.comCfg.setterTiers&&Array.isArray(p.comCfg.setterTiers))comCfg.setterTiers=p.comCfg.setterTiers;
+        if(p.comCfg.coldCallerTiers&&Array.isArray(p.comCfg.coldCallerTiers))comCfg.coldCallerTiers=p.comCfg.coldCallerTiers;
         if(p.comCfg.setterFijos)comCfg.setterFijos=p.comCfg.setterFijos;
         if(p.comCfg.setterFlatPct)comCfg.setterFlatPct=p.comCfg.setterFlatPct;
         if(p.comCfg.closerFlatPct)comCfg.closerFlatPct=p.comCfg.closerFlatPct;
