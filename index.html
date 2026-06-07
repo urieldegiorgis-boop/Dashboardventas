@@ -278,8 +278,23 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 
   <div class="card">
-    <div class="card-head"><span class="card-title">Por Vertical</span><span style="font-size:11px;color:var(--t3)" id="vertSubtitle"></span></div>
+    <div class="card-head" style="background:#1e2845;border-bottom-color:#3a4060">
+      <span class="card-title" style="color:#ffffff">Por Vertical</span>
+      <span style="font-size:11px;color:rgba(255,255,255,.6)" id="vertSubtitle"></span>
+    </div>
     <div class="card-body"><div class="vert-grid" id="vertGrid"></div></div>
+  </div>
+
+  <!-- TOP UTMs -->
+  <div class="card">
+    <div class="card-head" style="background:#1e2845;border-bottom-color:#3a4060">
+      <span class="card-title" style="color:#ffffff">Top UTM Terms</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;color:rgba(255,255,255,.5)" id="utmTopSub"></span>
+        <button onclick="openUtmDonut()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:4px 12px;border-radius:5px;font-size:11px;cursor:pointer;font-family:var(--font);font-weight:600">Ver gráfico circular →</button>
+      </div>
+    </div>
+    <div class="card-body"><div class="vert-grid" id="utmTopGrid"></div></div>
   </div>
 
   <!-- 4 GRÁFICOS -->
@@ -287,7 +302,7 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
     <div class="card" style="cursor:pointer" onclick="openDetModal('closer')"><div class="card-head" style="background:#1e2845;border-bottom-color:#3a4060"><span class="card-title" style="color:#ffffff">Cash por Closer</span><span style="font-size:10px;color:rgba(255,255,255,.7)">Ver detalle →</span></div><div class="card-body" style="padding:6px 0 0 0"><div class="chart-box"><canvas id="cBarCloser"></canvas></div></div></div>
     <div class="card" style="cursor:pointer" onclick="openDetModal('setter')"><div class="card-head" style="background:#1e2845;border-bottom-color:#3a4060"><span class="card-title" style="color:#ffffff">Cash por Setter</span><span style="font-size:10px;color:rgba(255,255,255,.7)">Ver detalle →</span></div><div class="card-body" style="padding:6px 0 0 0"><div class="chart-box"><canvas id="cBarSetter"></canvas></div></div></div>
     <div class="card" style="cursor:pointer" onclick="openDetModal('source')"><div class="card-head" style="background:#1e2845;border-bottom-color:#3a4060"><span class="card-title" style="color:#ffffff">Cash por Source</span><span style="font-size:10px;color:rgba(255,255,255,.7)">Ver detalle →</span></div><div class="card-body" style="padding:10px"><div class="chart-box"><canvas id="cDonut"></canvas></div><div id="donutLeg" style="margin-top:8px;display:flex;flex-direction:column;gap:4px"></div></div></div>
-    <div class="card" style="cursor:pointer" onclick="openDetModal('utm')"><div class="card-head" style="background:#1e2845;border-bottom-color:#3a4060"><span class="card-title" style="color:#ffffff">Cash por UTM Term</span><span style="font-size:10px;color:rgba(255,255,255,.7)">Ver detalle →</span></div><div class="card-body" style="padding:6px 0 0 0"><div class="chart-box"><canvas id="cBarUtm"></canvas></div></div></div>
+    <div class="card" style="cursor:pointer" onclick="openDetModal('utm')"><div class="card-head" style="background:#1e2845;border-bottom-color:#3a4060"><span class="card-title" style="color:#ffffff">Cash por UTM Term</span><span style="font-size:10px;color:rgba(255,255,255,.7)">Ver detalle →</span></div><div class="card-body" style="padding:6px 0 0 0"><div class="chart-box" style="height:240px"><canvas id="cBarUtm"></canvas></div></div></div>
   </div>
 
   <!-- EVOLUCIÓN -->
@@ -1037,8 +1052,42 @@ function drawBar(id,labels,vals,colors,fmtFn){
     var r=Math.min(3,bH/2);ctx.fillStyle=colors[i%colors.length];
     ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+bW-r,y);ctx.quadraticCurveTo(x+bW,y,x+bW,y+r);
     ctx.lineTo(x+bW,y+bH);ctx.lineTo(x,y+bH);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();ctx.fill();
-    ctx.fillStyle='#7080a0';ctx.font='8px sans-serif';ctx.textAlign='center';
-    var lbl=(labels[i]||'').slice(0,8);ctx.fillText(lbl,x+bW/2,H-pB+12);
+    ctx.fillStyle='#4a5580';ctx.font='bold 8px Inter,sans-serif';ctx.textAlign='center';
+    var lbl=(labels[i]||'').slice(0,10);ctx.fillText(lbl,x+bW/2,H-pB+13);
+  });
+  canvas._d={labels:labels,vals:vals,fmtFn:fmtFn||fmt,pL:pL,pT:pT,pB:pB,cW:cW,cH:cH,maxV:maxV,bW:bW,gap:gap,n:vals.length};
+  canvas.onmousemove=function(e){var rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left;var d=canvas._d,idx=Math.floor((mx-d.pL-d.gap)/(d.bW+d.gap));if(idx>=0&&idx<d.n){var tip=ge('chartTip');tip.textContent=d.labels[idx]+': '+d.fmtFn(d.vals[idx]);tip.style.left=(e.clientX+12)+'px';tip.style.top=(e.clientY-10)+'px';tip.style.display='block';}};
+  canvas.onmouseleave=function(){ge('chartTip').style.display='none';};
+}
+
+function drawBarRotated(id,labels,vals,colors,fmtFn){
+  var canvas=ge(id);if(!canvas)return;
+  var box=canvas.parentElement;
+  var W=box.clientWidth||box.offsetWidth||0,H=box.clientHeight||box.offsetHeight||200;
+  if(W<10){setTimeout(function(){drawBarRotated(id,labels,vals,colors,fmtFn);},80);return;}
+  canvas.width=W*2;canvas.height=H*2;canvas.style.width=W+'px';canvas.style.height=H+'px';
+  var ctx=canvas.getContext('2d');ctx.scale(2,2);ctx.clearRect(0,0,W,H);
+  if(!vals.length){ctx.fillStyle='#4a5270';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('Sin datos',W/2,H/2);return;}
+  var maxV=Math.max.apply(null,vals)||1;
+  var pL=48,pR=8,pT=8,pB=70,cW=W-pL-pR,cH=H-pT-pB;
+  var bW=Math.max(6,Math.floor(cW/vals.length*0.6)),gap=(cW-bW*vals.length)/(vals.length+1);
+  ctx.strokeStyle='rgba(0,0,0,0.08)';ctx.lineWidth=1;
+  for(var i=0;i<=4;i++){var gy=pT+cH-cH*i/4;ctx.beginPath();ctx.moveTo(pL,gy);ctx.lineTo(W-pR,gy);ctx.stroke();
+    var gv2=maxV*i/4;ctx.fillStyle='#5a6080';ctx.font='8px sans-serif';ctx.textAlign='right';
+    ctx.fillText(gv2>=1000?Math.round(gv2/1000)+'k':Math.round(gv2),pL-3,gy+3);}
+  vals.forEach(function(v,i){
+    var x=pL+gap+(bW+gap)*i,bH=Math.max(2,cH*v/maxV),y=pT+cH-bH;
+    var r=Math.min(3,bH/2);ctx.fillStyle=colors[i%colors.length];
+    ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+bW-r,y);ctx.quadraticCurveTo(x+bW,y,x+bW,y+r);
+    ctx.lineTo(x+bW,y+bH);ctx.lineTo(x,y+bH);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();ctx.fill();
+    // Rotated label
+    var lbl=(labels[i]||'').slice(0,18);
+    var lx=x+bW/2, ly=pT+cH+6;
+    ctx.save();
+    ctx.translate(lx,ly);ctx.rotate(-Math.PI/4);
+    ctx.fillStyle='#4a5580';ctx.font='bold 7.5px Inter,sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';
+    ctx.fillText(lbl,0,0);
+    ctx.restore();
   });
   canvas._d={labels:labels,vals:vals,fmtFn:fmtFn||fmt,pL:pL,pT:pT,pB:pB,cW:cW,cH:cH,maxV:maxV,bW:bW,gap:gap,n:vals.length};
   canvas.onmousemove=function(e){var rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left;var d=canvas._d,idx=Math.floor((mx-d.pL-d.gap)/(d.bW+d.gap));if(idx>=0&&idx<d.n){var tip=ge('chartTip');tip.textContent=d.labels[idx]+': '+d.fmtFn(d.vals[idx]);tip.style.left=(e.clientX+12)+'px';tip.style.top=(e.clientY-10)+'px';tip.style.display='block';}};
@@ -1195,7 +1244,6 @@ function renderVerticals(){
   var totalCash=0;
   filtered.forEach(function(s){
     if(s.refund==='yes')return;
-    // Intentar leer vertical del campo utm o deal; si no, "Otro"
     var vert=s.vertical||'Otro';
     if(!VERTICALS.includes(vert))vert='Otro';
     if(!vm[vert])vm[vert]={cash:0,pagos:0};
@@ -1221,6 +1269,189 @@ function renderVerticals(){
       +'<div class="vert-bar"><div class="vert-bar-fill" style="width:'+pct+'%;background:'+col+'"></div></div>';
     grid.appendChild(card);
   });
+
+  // ── TOP UTMs ──
+  renderUtmTop();
+}
+
+function renderUtmTop(){
+  var utm={},totalCash=0;
+  filtered.forEach(function(s){
+    if(s.refund==='yes')return;
+    var k=s.utm||'Sin UTM';var c=parseFloat(s.cash)||0;
+    if(!utm[k])utm[k]={cash:0,pagos:0};
+    utm[k].cash+=c;utm[k].pagos++;totalCash+=c;
+  });
+  var sorted=Object.keys(utm).sort(function(a,b){return utm[b].cash-utm[a].cash;}).slice(0,7);
+  var grid=ge('utmTopGrid');if(!grid)return;
+  grid.innerHTML='';
+  var sub=ge('utmTopSub');
+  if(sub)sub.textContent=Object.keys(utm).length+' términos';
+  var COLS=['#b8f55a','#4f8ef7','#f0b429','#4caf7d','#9b59b6','#e05c5c','#5af5b8'];
+  sorted.forEach(function(k,i){
+    var d=utm[k];
+    var pct=totalCash?Math.round(d.cash/totalCash*100):0;
+    var col=COLS[i]||'#8892aa';
+    var card=document.createElement('div');card.className='vert-card';
+    card.style.borderTop='2px solid '+col;
+    card.innerHTML='<div class="vert-card-name" style="font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(k)+'">'+esc(k)+'</div>'
+      +'<div class="vert-card-num">'+fmt(d.cash)+'</div>'
+      +'<div class="vert-card-sub">'+d.pagos+' ventas · '+pct+'% del total</div>'
+      +'<div class="vert-bar"><div class="vert-bar-fill" style="width:'+pct+'%;background:'+col+'"></div></div>';
+    grid.appendChild(card);
+  });
+}
+
+var _utmDonutData=[];
+var _utmDonutSize=0;
+var _utmTooltipEl=null;
+
+function openUtmDonut(){
+  var modal=ge('utmDonutModal');
+  modal.style.display='flex';
+
+  var utm={},totalCash=0;
+  filtered.forEach(function(s){
+    if(s.refund==='yes')return;
+    var k=s.utm||'Sin UTM';var c=parseFloat(s.cash)||0;
+    if(!utm[k])utm[k]={cash:0,pagos:0};
+    utm[k].cash+=c;utm[k].pagos++;totalCash+=c;
+  });
+  var sorted=Object.keys(utm).sort(function(a,b){return utm[b].cash-utm[a].cash;});
+  var COLS=['#b8f55a','#4f8ef7','#f0b429','#4caf7d','#9b59b6','#e05c5c','#5af5b8','#f5905a','#e67e22','#1abc9c','#8892aa','#e91e8c','#00bcd4','#ff9800','#607d8b','#9c27b0','#f44336','#03a9f4'];
+
+  var canvas=ge('utmDonutCanvas');
+  var size=Math.min(360, canvas.parentElement.clientWidth-20);
+  canvas.width=size*2;canvas.height=size*2;
+  canvas.style.width=size+'px';canvas.style.height=size+'px';
+  _utmDonutSize=size;
+
+  // Store slice data for hover
+  _utmDonutData=[];
+  var angle=-Math.PI/2;
+  sorted.forEach(function(k,i){
+    var slice=utm[k].cash/totalCash*Math.PI*2;
+    _utmDonutData.push({key:k,cash:utm[k].cash,pct:Math.round(utm[k].cash/totalCash*100),col:COLS[i%COLS.length],start:angle,end:angle+slice});
+    angle+=slice;
+  });
+
+  drawUtmDonut(totalCash, size, -1);
+
+  // Hover tooltip
+  if(!_utmTooltipEl){
+    _utmTooltipEl=document.createElement('div');
+    _utmTooltipEl.style.cssText='position:fixed;background:#0f1220;color:#fff;padding:6px 10px;border-radius:6px;font-size:11px;pointer-events:none;display:none;z-index:9999;max-width:220px;line-height:1.4';
+    document.body.appendChild(_utmTooltipEl);
+  }
+
+  canvas.onmousemove=function(e){
+    var rect=canvas.getBoundingClientRect();
+    var mx=(e.clientX-rect.left)/rect.width*_utmDonutSize;
+    var my=(e.clientY-rect.top)/rect.height*_utmDonutSize;
+    var cx=_utmDonutSize/2,cy=_utmDonutSize/2;
+    var r=_utmDonutSize/2-16,ir=r*0.52;
+    var dx=mx-cx,dy=my-cy,dist=Math.sqrt(dx*dx+dy*dy);
+    var hov=-1;
+    if(dist>=ir&&dist<=r){
+      var a=Math.atan2(dy,dx);
+      if(a<-Math.PI/2)a+=Math.PI*2;
+      for(var i=0;i<_utmDonutData.length;i++){
+        var d=_utmDonutData[i];
+        var s2=d.start<-Math.PI/2?d.start+Math.PI*2:d.start;
+        var e2=d.end<-Math.PI/2?d.end+Math.PI*2:d.end;
+        if(a>=s2&&a<=e2){hov=i;break;}
+      }
+    }
+    if(hov>=0){
+      var d=_utmDonutData[hov];
+      _utmTooltipEl.innerHTML='<b style="color:'+d.col+'">'+esc(d.key)+'</b><br>'+fmt(d.cash)+' · '+d.pct+'%';
+      _utmTooltipEl.style.display='block';
+      _utmTooltipEl.style.left=(e.clientX+14)+'px';
+      _utmTooltipEl.style.top=(e.clientY-10)+'px';
+      canvas.style.cursor='pointer';
+      drawUtmDonut(totalCash, size, hov);
+    } else {
+      _utmTooltipEl.style.display='none';
+      canvas.style.cursor='default';
+      drawUtmDonut(totalCash, size, -1);
+    }
+  };
+  canvas.onmouseleave=function(){
+    if(_utmTooltipEl)_utmTooltipEl.style.display='none';
+    drawUtmDonut(totalCash, size, -1);
+  };
+
+  // Striped legend
+  var leg=ge('utmDonutLeg');leg.innerHTML='';
+  _utmDonutData.forEach(function(d,i){
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;padding:6px 10px;border-radius:4px;background:'+(i%2===0?'#f0f2fa':'#ffffff');
+    row.innerHTML='<div style="width:12px;height:12px;border-radius:3px;background:'+d.col+';flex-shrink:0"></div>'
+      +'<span style="flex:1;color:#0f1220;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(d.key)+'">'+esc(d.key)+'</span>'
+      +'<span style="color:#6070a0;min-width:80px;text-align:right">'+fmt(d.cash)+'</span>'
+      +'<span style="color:#2563eb;font-weight:700;min-width:38px;text-align:right">'+d.pct+'%</span>';
+    leg.appendChild(row);
+  });
+}
+
+function drawUtmDonut(totalCash, size, hovIdx){
+  var canvas=ge('utmDonutCanvas');if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.scale(2,2);
+  var cx=size/2,cy=size/2,r=size/2-16,ir=r*0.52;
+
+  _utmDonutData.forEach(function(d,i){
+    var isHov=i===hovIdx;
+    var rr=isHov?r+8:r;
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,rr,d.start,d.end);
+    ctx.closePath();
+    ctx.fillStyle=d.col;
+    ctx.globalAlpha=isHov?1:(hovIdx>=0?0.75:1);
+    ctx.fill();
+    ctx.globalAlpha=1;
+  });
+
+  // Inner circle white
+  ctx.beginPath();ctx.arc(cx,cy,ir,0,Math.PI*2);ctx.fillStyle='#ffffff';ctx.fill();
+
+  // Percentage labels on slices
+  _utmDonutData.forEach(function(d,i){
+    if(d.pct<5)return;
+    var midA=d.start+(d.end-d.start)/2;
+    var lr=(ir+r)/2;
+    var lx=cx+Math.cos(midA)*lr;
+    var ly=cy+Math.sin(midA)*lr;
+    ctx.fillStyle='#fff';ctx.font='bold 9px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.shadowColor='rgba(0,0,0,.3)';ctx.shadowBlur=2;
+    ctx.fillText(d.pct+'%',lx,ly);
+    ctx.shadowBlur=0;
+  });
+
+  // Center text
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  if(hovIdx>=0&&_utmDonutData[hovIdx]){
+    var d=_utmDonutData[hovIdx];
+    ctx.fillStyle=d.col;ctx.font='bold 13px Inter,sans-serif';
+    ctx.fillText(fmt(d.cash),cx,cy-8);
+    ctx.fillStyle='#0f1220';ctx.font='bold 10px Inter,sans-serif';
+    var short=d.key.length>18?d.key.slice(0,16)+'…':d.key;
+    ctx.fillText(short,cx,cy+8);
+    ctx.fillStyle='#6070a0';ctx.font='9px Inter,sans-serif';
+    ctx.fillText(d.pct+'% del total',cx,cy+22);
+  } else {
+    ctx.fillStyle='#0f1220';ctx.font='bold 14px Inter,sans-serif';
+    ctx.fillText(fmt(totalCash),cx,cy-8);
+    ctx.fillStyle='#6070a0';ctx.font='9px Inter,sans-serif';
+    ctx.fillText('Cash Total',cx,cy+8);
+  }
+  ctx.setTransform(1,0,0,1,0,0);
+}
+
+function closeUtmDonut(){
+  ge('utmDonutModal').style.display='none';
+  if(_utmTooltipEl)_utmTooltipEl.style.display='none';
 }
 
 // ── DETAIL MODAL ──────────────────────────────────────────────────────────
@@ -1358,7 +1589,7 @@ function drawCharts(){
   drawDonut('cDonut',srck,srck.map(function(k){return Math.round(src[k]);}),C,'donutLeg');
   var utm={};filtered.forEach(function(s){if(s.refund==='yes')return;var c=s.utm||'Sin UTM';if(!utm[c])utm[c]=0;utm[c]+=parseFloat(s.cash)||0;});
   var utmk=Object.keys(utm).sort(function(a,b){return utm[b]-utm[a];});
-  drawBar('cBarUtm',utmk,utmk.map(function(k){return Math.round(utm[k]);}),['#b8f55a','#f0b429','#4f8ef7','#4caf7d','#9b59b6','#e05c5c'],fmt);
+  drawBarRotated('cBarUtm',utmk,utmk.map(function(k){return Math.round(utm[k]);}),['#b8f55a','#f0b429','#4f8ef7','#4caf7d','#9b59b6','#e05c5c'],fmt);
 }
 
 function setEvo(g){
@@ -3558,6 +3789,18 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
       <button class="btn btn-ghost" onclick="closeLiqModal()">Cancelar</button>
       <button class="btn btn-primary" onclick="saveLiqModal()">Guardar</button>
     </div>
+  </div>
+</div>
+
+<!-- UTM DONUT MODAL -->
+<div class="modal-bg" id="utmDonutModal" onclick="if(event.target===this)closeUtmDonut()" style="display:none;position:fixed;inset:0;background:rgba(30,40,80,.6);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:24px;width:600px;max-width:95vw;max-height:92vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <span style="font-size:14px;font-weight:700;color:#0f1220">Cash por UTM Term</span>
+      <button onclick="closeUtmDonut()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#6070a0">✕</button>
+    </div>
+    <canvas id="utmDonutCanvas" style="width:100%;display:block;margin:0 auto"></canvas>
+    <div id="utmDonutLeg" style="margin-top:16px;display:flex;flex-direction:column;gap:3px"></div>
   </div>
 </div>
 
