@@ -1863,7 +1863,8 @@ function uploadCompFile(file, prefix){
       var pub = supa.storage.from('comprobantes').getPublicUrl(path);
       var url = (pub && pub.data && pub.data.publicUrl) || '';
       notasEl.value = url;
-      statusEl.innerHTML = '✓ Subido — <a href="'+url+'" target="_blank" style="color:var(--accent)">Ver comprobante</a>';
+      if(imgEl){ imgEl.style.cursor='zoom-in'; imgEl.onclick=function(ev){ ev.stopPropagation(); window.open(url,'_blank'); }; }
+      statusEl.innerHTML = '✓ Subido — <a href="'+url+'" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent)">Ver comprobante</a>';
       statusEl.style.color = 'var(--green)';
       toast('Comprobante subido ✓');
     })
@@ -1884,10 +1885,10 @@ function loadComprobante(prefix, url){
   if(notasEl) notasEl.value = url;
   if(/^https?:\/\//.test(url)){
     var isDrive = url.indexOf('drive.google.com') > -1;
-    if(imgEl && previewEl && !isDrive){ imgEl.src = url; previewEl.style.display = 'block'; }
+    if(imgEl && previewEl && !isDrive){ imgEl.src = url; previewEl.style.display = 'block'; imgEl.style.cursor='zoom-in'; imgEl.onclick=function(ev){ ev.stopPropagation(); window.open(url,'_blank'); }; }
     var txt = isDrive ? 'Ver en Drive' : 'Ver comprobante';
     if(statusEl){
-      statusEl.innerHTML = '✓ Comprobante guardado — <a href="'+url+'" target="_blank" style="color:var(--accent)">'+txt+'</a>';
+      statusEl.innerHTML = '✓ Comprobante guardado — <a href="'+url+'" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent)">'+txt+'</a>';
       statusEl.style.color = 'var(--green)';
     }
   }
