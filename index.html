@@ -692,8 +692,8 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 // ── DATA ─────────────────────────────────────────────────────────────────
 var CFG={
-  closers:['Denis','Fran','Ariel S','Alex','Endika','Miguel A','Uriel','Ivan','Antonio','Mehdi','Santi','No Closer'],
-  setters:['Ariel','David','Juan Cruz','Ivan','Miguel','Sonia','Nico','Uriel','No Setter'],
+  closers:['Denis','Fran','Ariel S','Alex','Endika','Miguel A','Uriel','Ivan','No Closer','Noelia','Irene','Hugo','Miguel','Airam','Mohamed'],
+  setters:['Ariel','Ivan','Miguel','Sonia','Nico','Uriel','No Setter','Iker','Airam','Gian Carlo'],
   sources:['VSL','Setter','Cold Caller','Instagram','Youtube Vlog','Youtube Aut','Email','Podcast','Hotmart','Otro'],
   cold_callers:['Javi A','Dani'],
   deals:['Sequra','Full pay','Split Pay','Deposit','Scheduled payment','Refund'],
@@ -798,7 +798,7 @@ async function loadData(){
     try{
       var d=localStorage.getItem('lath3_cfg');
       if(d){ var p=JSON.parse(d); applyCfg(p);
-        try{ supa.from('config_ventas').upsert({id:'main',data:{CFG,comCfg,bonusByWeek}}); }catch(e){}
+        try{ var mr=await supa.from('config_ventas').upsert({id:'main',data:{CFG,comCfg,bonusByWeek}}); if(mr&&mr.error) console.error('cfg migrate',mr.error); }catch(e){ console.error('cfg migrate',e); }
       }
     }catch(e){}
   }
@@ -1829,58 +1829,49 @@ function uploadCompFile(file, prefix){
   if(!file.type.startsWith('image/')){toast('Solo se permiten imágenes');return;}
   if(file.size > 10*1024*1024){toast('Imagen demasiado grande (máx 10MB)');return;}
 
-  statusEl.textContent = '⏳ Subiendo a Drive...';
+  // Vista previa inmediata
+  var reader = new FileReader();
+  reader.onload = function(e){ imgEl.src = e.target.result; previewEl.style.display = 'block'; };
+  reader.readAsDataURL(file);
+
+  // Closer y mes desde el formulario (venta nueva = fCloser2, modal edición = mCloser)
+  var closerEl = ge(prefix==='m' ? 'mCloser' : 'fCloser2');
+  var closer = ((closerEl && closerEl.value) || '').trim() || 'Sin Closer';
+  var fechaEl = ge(prefix+'Fecha');
+  var fechaVal = (fechaEl && fechaEl.value) || '';
+  var ym;
+  if(/^\d{4}-\d{2}-\d{2}/.test(fechaVal)){ ym = fechaVal.slice(0,7); }
+  else { var n=new Date(); ym = n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0'); }
+
+  function slug(s){
+    return ((s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-zA-Z0-9._-]+/g,'_').replace(/^_+|_+$/g,'')) || 'x';
+  }
+  var path = slug(closer) + '/' + ym + '/comp_' + Date.now() + '_' + slug(file.name);
+
+  statusEl.textContent = '⏳ Subiendo...';
   statusEl.style.color = 'var(--accent)';
 
-  var reader = new FileReader();
-  reader.onload = function(e){
-    var base64 = e.target.result.split(',')[1];
-    var mimeType = file.type;
-    var fileName = 'comp_' + new Date().toISOString().slice(0,10) + '_' + file.name;
-
-    // Show preview immediately
-    imgEl.src = e.target.result;
-    previewEl.style.display = 'block';
-
-    // Upload via Anthropic API calling Drive MCP
-    fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 500,
-        mcp_servers: [{type:'url', url:'https://drivemcp.googleapis.com/mcp/v1', name:'gdrive'}],
-        messages: [{
-          role: 'user',
-          content: 'Upload this file to Google Drive folder ID "'+DRIVE_FOLDER_ID+'". Title: "'+fileName+'". Base64 content: "'+base64+'". Content mime type: "'+mimeType+'". Disable conversion to Google type. Reply with ONLY the JSON: {"id":"...","viewUrl":"..."}. Nothing else.'
-        }]
-      })
-    })
-    .then(function(r){return r.json();})
-    .then(function(data){
-      var text = (data.content||[]).map(function(c){return c.text||'';}).join('');
-      var match = text.match(/\{[^}]*"id"\s*:\s*"([^"]+)"[^}]*"viewUrl"\s*:\s*"([^"]+)"[^}]*\}/);
-      if(!match) match = text.match(/"id"\s*:\s*"([^"]+)"/);
-      if(match){
-        var fileId = match[1];
-        var viewUrl = 'https://drive.google.com/file/d/'+fileId+'/view';
-        notasEl.value = viewUrl;
-        statusEl.innerHTML = '✓ Subido — <a href="'+viewUrl+'" target="_blank" style="color:var(--accent)">Ver en Drive</a>';
-        statusEl.style.color = 'var(--green)';
-        toast('Comprobante subido a Drive ✓');
-      } else {
-        statusEl.textContent = '⚠ Error al subir. Guardando link local.';
+  supa.storage.from('comprobantes').upload(path, file, {contentType:file.type, upsert:true})
+    .then(function(res){
+      if(res.error){
+        console.error('comp upload', res.error);
+        statusEl.textContent = '⚠ Error al subir: ' + (res.error.message||'revisa el bucket/políticas');
         statusEl.style.color = 'var(--yellow)';
-        notasEl.value = 'local:'+file.name;
+        return;
       }
+      var pub = supa.storage.from('comprobantes').getPublicUrl(path);
+      var url = (pub && pub.data && pub.data.publicUrl) || '';
+      notasEl.value = url;
+      statusEl.innerHTML = '✓ Subido — <a href="'+url+'" target="_blank" style="color:var(--accent)">Ver comprobante</a>';
+      statusEl.style.color = 'var(--green)';
+      toast('Comprobante subido ✓');
     })
-    .catch(function(){
-      statusEl.textContent = '⚠ Sin conexión a Drive. Vista previa guardada.';
+    .catch(function(err){
+      console.error('comp upload', err);
+      statusEl.textContent = '⚠ Sin conexión. Intenta de nuevo.';
       statusEl.style.color = 'var(--yellow)';
-      notasEl.value = 'local:'+file.name;
     });
-  };
-  reader.readAsDataURL(file);
 }
 
 // Load existing comprobante into edit modal
