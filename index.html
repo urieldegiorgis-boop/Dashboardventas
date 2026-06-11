@@ -768,28 +768,40 @@ function saleToDbRow(s){
 
 // ── STORAGE ───────────────────────────────────────────────────────────────
 function saveData(){
-  // Config y bonuses siguen en localStorage; ventas van a Supabase
-  try{localStorage.setItem('lath3_cfg',JSON.stringify({CFG,comCfg,bonusByWeek}));}catch(e){}
+  var cfg={CFG,comCfg,bonusByWeek};
+  // cache local + config compartida en Supabase
+  try{localStorage.setItem('lath3_cfg',JSON.stringify(cfg));}catch(e){}
+  try{ supa.from('config_ventas').upsert({id:'main',data:cfg}).then(function(r){ if(r&&r.error) console.error('cfg save',r.error); }); }catch(e){ console.error(e); }
+}
+function applyCfg(p){
+  if(!p) return;
+  if(p.CFG){CFG.closers=p.CFG.closers||CFG.closers;CFG.setters=p.CFG.setters||CFG.setters;CFG.sources=p.CFG.sources||CFG.sources;CFG.pagos=p.CFG.pagos||CFG.pagos;CFG.cold_callers=p.CFG.cold_callers||CFG.cold_callers;}
+  if(p.comCfg){
+    if(p.comCfg.closerTiers&&Array.isArray(p.comCfg.closerTiers))comCfg.closerTiers=p.comCfg.closerTiers;
+    if(p.comCfg.setterTiers&&Array.isArray(p.comCfg.setterTiers))comCfg.setterTiers=p.comCfg.setterTiers;
+    if(p.comCfg.coldCallerTiers&&Array.isArray(p.comCfg.coldCallerTiers))comCfg.coldCallerTiers=p.comCfg.coldCallerTiers;
+    if(p.comCfg.setterFijos)comCfg.setterFijos=p.comCfg.setterFijos;
+    if(p.comCfg.setterFlatPct)comCfg.setterFlatPct=p.comCfg.setterFlatPct;
+    if(p.comCfg.closerFlatPct)comCfg.closerFlatPct=p.comCfg.closerFlatPct;
+    if(p.comCfg.liqExtras)comCfg.liqExtras=p.comCfg.liqExtras;
+  }
+  if(p.bonusByWeek)bonusByWeek=p.bonusByWeek;
 }
 async function loadData(){
-  // Cargar config desde localStorage
+  // Config: Supabase (principal) con fallback + migración desde localStorage
+  var cfgOK=false;
   try{
-    var d=localStorage.getItem('lath3_cfg');
-    if(d){
-      var p=JSON.parse(d);
-      if(p.CFG){CFG.closers=p.CFG.closers||CFG.closers;CFG.setters=p.CFG.setters||CFG.setters;CFG.sources=p.CFG.sources||CFG.sources;CFG.pagos=p.CFG.pagos||CFG.pagos;CFG.cold_callers=p.CFG.cold_callers||CFG.cold_callers;}
-      if(p.comCfg){
-        if(p.comCfg.closerTiers&&Array.isArray(p.comCfg.closerTiers))comCfg.closerTiers=p.comCfg.closerTiers;
-        if(p.comCfg.setterTiers&&Array.isArray(p.comCfg.setterTiers))comCfg.setterTiers=p.comCfg.setterTiers;
-        if(p.comCfg.coldCallerTiers&&Array.isArray(p.comCfg.coldCallerTiers))comCfg.coldCallerTiers=p.comCfg.coldCallerTiers;
-        if(p.comCfg.setterFijos)comCfg.setterFijos=p.comCfg.setterFijos;
-        if(p.comCfg.setterFlatPct)comCfg.setterFlatPct=p.comCfg.setterFlatPct;
-        if(p.comCfg.closerFlatPct)comCfg.closerFlatPct=p.comCfg.closerFlatPct;
-        if(p.comCfg.liqExtras)comCfg.liqExtras=p.comCfg.liqExtras;
+    var {data:cfgRow}=await supa.from('config_ventas').select('data').eq('id','main').maybeSingle();
+    if(cfgRow && cfgRow.data){ applyCfg(cfgRow.data); cfgOK=true; }
+  }catch(e){ console.error('cfg load',e); }
+  if(!cfgOK){
+    try{
+      var d=localStorage.getItem('lath3_cfg');
+      if(d){ var p=JSON.parse(d); applyCfg(p);
+        try{ supa.from('config_ventas').upsert({id:'main',data:{CFG,comCfg,bonusByWeek}}); }catch(e){}
       }
-      if(p.bonusByWeek)bonusByWeek=p.bonusByWeek;
-    }
-  }catch(e){}
+    }catch(e){}
+  }
 
   // Cargar ventas desde Supabase (paginado para manejar miles de registros)
   sales=[];
