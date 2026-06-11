@@ -1882,9 +1882,14 @@ function loadComprobante(prefix, url){
   var previewEl = ge(prefix+'CompPreview');
   var imgEl = ge(prefix+'CompImg');
   if(notasEl) notasEl.value = url;
-  if(url.startsWith('https://drive.google.com') && statusEl){
-    statusEl.innerHTML = '✓ Comprobante guardado — <a href="'+url+'" target="_blank" style="color:var(--accent)">Ver en Drive</a>';
-    statusEl.style.color = 'var(--green)';
+  if(/^https?:\/\//.test(url)){
+    var isDrive = url.indexOf('drive.google.com') > -1;
+    if(imgEl && previewEl && !isDrive){ imgEl.src = url; previewEl.style.display = 'block'; }
+    var txt = isDrive ? 'Ver en Drive' : 'Ver comprobante';
+    if(statusEl){
+      statusEl.innerHTML = '✓ Comprobante guardado — <a href="'+url+'" target="_blank" style="color:var(--accent)">'+txt+'</a>';
+      statusEl.style.color = 'var(--green)';
+    }
   }
 }
 function renderConfig(){
