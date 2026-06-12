@@ -1670,6 +1670,7 @@ function show(v,btn){
   document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('act');});
   ge('v-'+v).classList.add('act');
   if(btn)btn.classList.add('act');
+  if(v==='nueva')resetForm();
   if(v==='ventas')renderVentas();
   if(v==='config')renderConfig();
   if(v==='balance')renderBalance();
@@ -1762,6 +1763,7 @@ function resetForm(){
   var fs=ge('fCompStatus'),fp=ge('fCompPreview'),ff=ge('fCompFile');
   if(fs){fs.textContent='📎 Clic o arrastrá una imagen aquí';fs.style.color='var(--t3)';}
   if(fp)fp.style.display='none';
+  var fi=ge('fCompImg'); if(fi){fi.src='';fi.onclick=null;}
   if(ff)ff.value='';;
   ge('fPais').value='Spain';ge('fFecha').value=td();
   ge('fRevenue').value='';ge('fCash').value='';ge('formOk').style.display='none';
@@ -1864,7 +1866,10 @@ function uploadCompFile(file, prefix){
       var url = (pub && pub.data && pub.data.publicUrl) || '';
       notasEl.value = url;
       if(imgEl){ imgEl.style.cursor='zoom-in'; imgEl.onclick=function(ev){ ev.stopPropagation(); window.open(url,'_blank'); }; }
-      statusEl.innerHTML = '✓ Subido — <a href="'+url+'" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent)">Ver comprobante</a>';
+      statusEl.innerHTML = '✓ Subido — '
+        + '<a href="'+url+'" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent)">Ver comprobante</a>'
+        + ' · <span onclick="event.stopPropagation();changeComp(\''+prefix+'\')" style="color:var(--accent);cursor:pointer;font-weight:600">Cambiar</span>'
+        + ' · <span onclick="event.stopPropagation();clearComp(\''+prefix+'\')" style="color:#d85a30;cursor:pointer;font-weight:600">Quitar</span>';
       statusEl.style.color = 'var(--green)';
       toast('Comprobante subido ✓');
     })
@@ -1876,6 +1881,16 @@ function uploadCompFile(file, prefix){
 }
 
 // Load existing comprobante into edit modal
+function changeComp(prefix){ var ff=ge(prefix+'CompFile'); if(ff){ ff.value=''; ff.click(); } }
+function clearComp(prefix){
+  var notasEl=ge(prefix+'Notas'), statusEl=ge(prefix+'CompStatus'), previewEl=ge(prefix+'CompPreview'), imgEl=ge(prefix+'CompImg'), ff=ge(prefix+'CompFile');
+  if(notasEl) notasEl.value='';
+  if(previewEl) previewEl.style.display='none';
+  if(imgEl){ imgEl.src=''; imgEl.onclick=null; }
+  if(ff) ff.value='';
+  if(statusEl){ statusEl.innerHTML='📎 Clic o arrastrá una imagen aquí'; statusEl.style.color='var(--t3)'; }
+  toast(prefix==='m' ? 'Comprobante quitado — guarda los cambios' : 'Comprobante quitado');
+}
 function loadComprobante(prefix, url){
   if(!url) return;
   var notasEl = ge(prefix+'Notas');
@@ -1888,7 +1903,10 @@ function loadComprobante(prefix, url){
     if(imgEl && previewEl && !isDrive){ imgEl.src = url; previewEl.style.display = 'block'; imgEl.style.cursor='zoom-in'; imgEl.onclick=function(ev){ ev.stopPropagation(); window.open(url,'_blank'); }; }
     var txt = isDrive ? 'Ver en Drive' : 'Ver comprobante';
     if(statusEl){
-      statusEl.innerHTML = '✓ Comprobante guardado — <a href="'+url+'" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent)">'+txt+'</a>';
+      statusEl.innerHTML = '✓ Comprobante guardado — '
+        + '<a href="'+url+'" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent)">'+txt+'</a>'
+        + ' · <span onclick="event.stopPropagation();changeComp(\''+prefix+'\')" style="color:var(--accent);cursor:pointer;font-weight:600">Cambiar</span>'
+        + ' · <span onclick="event.stopPropagation();clearComp(\''+prefix+'\')" style="color:#d85a30;cursor:pointer;font-weight:600">Quitar</span>';
       statusEl.style.color = 'var(--green)';
     }
   }
