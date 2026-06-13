@@ -684,6 +684,13 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
         <input id="mNotas" type="hidden">
       </div>
     </div>
+    <div style="margin:0 20px;border-top:1px solid var(--border);padding:14px 0 2px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <div id="mCodigoWrap" style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.4px">Código de cliente</span>
+        <span id="mCodigoCliente" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;font-weight:600;color:var(--t1);background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:3px 9px;letter-spacing:.3px">—</span>
+      </div>
+      <a href="https://tally.so/r/b52eY2" target="_blank" rel="noopener" class="btn btn-primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:600;padding:7px 13px;font-size:12px">📄 Solicitud Factura</a>
+    </div>
     <div class="modal-foot">
       <button class="btn btn-danger" onclick="delSale()" style="margin-right:auto">Eliminar</button>
       <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
@@ -719,8 +726,18 @@ var comCfg={
 var bonusByWeek={};
 var sales=[],filtered=[],eid=null,nid=1;
 var clientSeq=676; // código de cliente correlativo: número de la PRÓXIMA venta nueva
+var clientCodes={}; // idVenta -> número de código (SOLO ventas creadas desde ahora; las viejas no llevan)
 function fmtClientCode(n){return 'LTH_'+(new Date().getFullYear())+'_'+String(n).padStart(3,'0');}
 function refreshClientCode(){var el=ge('fCodigoCliente');if(el)el.textContent=fmtClientCode(clientSeq);}
+// Código de cliente SOLO para ventas creadas desde ahora (guardadas en clientCodes).
+// Las ventas viejas no tienen código -> devuelve null (en edición no se muestra).
+function saleClientCode(s){
+  if(!s||s.id==null)return null;
+  var n=clientCodes[s.id];
+  if(typeof n!=='number')n=parseInt(n,10);
+  if(!n||isNaN(n))return null;
+  return fmtClientCode(n);
+}
 var sk='fecha',sd=-1,vpg=1,vpp=30;
 var evoGran='day',activePeriod='all';
 
@@ -778,7 +795,7 @@ function saleToDbRow(s){
 
 // ── STORAGE ───────────────────────────────────────────────────────────────
 function saveData(){
-  var cfg={CFG,comCfg,bonusByWeek,clientSeq};
+  var cfg={CFG,comCfg,bonusByWeek,clientSeq,clientCodes};
   // cache local + config compartida en Supabase
   try{localStorage.setItem('lath3_cfg',JSON.stringify(cfg));}catch(e){}
   try{ supa.from('config_ventas').upsert({id:'main',data:cfg}).then(function(r){ if(r&&r.error) console.error('cfg save',r.error); }); }catch(e){ console.error(e); }
@@ -797,6 +814,7 @@ function applyCfg(p){
   }
   if(p.bonusByWeek)bonusByWeek=p.bonusByWeek;
   if(typeof p.clientSeq==='number'&&p.clientSeq>=676)clientSeq=p.clientSeq;
+  if(p.clientCodes&&typeof p.clientCodes==='object')clientCodes=p.clientCodes;
 }
 async function loadData(){
   // Config: Supabase (principal) con fallback + migración desde localStorage
@@ -1738,6 +1756,9 @@ function openEdit(id){
   ge('mPago').value=s.tipoPago||'';ge('mRefund').value=s.refund||'no';
   ge('mTxid').value=s.txid||'';ge('mNotas').value=s.notas||'';
   loadComprobante('m', s.notas||'');
+  var code=saleClientCode(s),ccWrap=ge('mCodigoWrap'),ccEl=ge('mCodigoCliente');
+  if(code){if(ccEl)ccEl.textContent=code;if(ccWrap)ccWrap.style.display='flex';}
+  else{if(ccWrap)ccWrap.style.display='none';}
   ge('modalBg').classList.add('open');
 }
 function closeModal(){ge('modalBg').classList.remove('open');eid=null;}
@@ -1765,6 +1786,7 @@ async function delSale(){
   var {error}=await supa.from('ventas').delete().eq('id',eid);
   if(error){alert('Error al eliminar: '+error.message);return;}
   sales=sales.filter(function(x){return String(x.id)!==String(eid);});
+  if(eid!=null)delete clientCodes[eid];
   clientSeq=Math.max(676,clientSeq-1);saveData();refreshClientCode();
   closeModal();applyF();renderVentas();toast('Venta eliminada');
 }
@@ -1799,6 +1821,7 @@ async function saveForm(){
   if(error){alert('Error al guardar: '+error.message);return;}
   var saved=dbRowToSale(data);
   sales.unshift(saved);applyF();
+  clientCodes[saved.id]=clientSeq; // la venta nueva conserva el código mostrado
   clientSeq=clientSeq+1;saveData();refreshClientCode();
   resetForm();ge('formOk').style.display='block';setTimeout(function(){ge('formOk').style.display='none';},3000);
 }
