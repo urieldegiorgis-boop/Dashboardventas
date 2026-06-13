@@ -409,6 +409,13 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
       <button class="btn btn-primary" onclick="saveForm()">Guardar venta</button>
     </div>
     <div id="formOk" style="display:none;margin:0 20px 16px;background:rgba(76,175,125,.15);border:1px solid rgba(76,175,125,.3);border-radius:6px;padding:10px 14px;color:var(--green);font-size:13px">✓ Venta guardada correctamente</div>
+    <div style="margin:0 20px 18px;border-top:1px solid var(--border);padding-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.4px">Código de cliente</span>
+        <span id="fCodigoCliente" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;font-weight:600;color:var(--t1);background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:3px 9px;letter-spacing:.3px">LTH_2026_676</span>
+      </div>
+      <a href="https://tally.so/r/b52eY2" target="_blank" rel="noopener" class="btn btn-primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:600;padding:7px 13px;font-size:12px">📄 Solicitud Factura</a>
+    </div>
   </div>
 </div>
 
@@ -711,6 +718,9 @@ var comCfg={
 };
 var bonusByWeek={};
 var sales=[],filtered=[],eid=null,nid=1;
+var clientSeq=676; // código de cliente correlativo: número de la PRÓXIMA venta nueva
+function fmtClientCode(n){return 'LTH_'+(new Date().getFullYear())+'_'+String(n).padStart(3,'0');}
+function refreshClientCode(){var el=ge('fCodigoCliente');if(el)el.textContent=fmtClientCode(clientSeq);}
 var sk='fecha',sd=-1,vpg=1,vpp=30;
 var evoGran='day',activePeriod='all';
 
@@ -768,7 +778,7 @@ function saleToDbRow(s){
 
 // ── STORAGE ───────────────────────────────────────────────────────────────
 function saveData(){
-  var cfg={CFG,comCfg,bonusByWeek};
+  var cfg={CFG,comCfg,bonusByWeek,clientSeq};
   // cache local + config compartida en Supabase
   try{localStorage.setItem('lath3_cfg',JSON.stringify(cfg));}catch(e){}
   try{ supa.from('config_ventas').upsert({id:'main',data:cfg}).then(function(r){ if(r&&r.error) console.error('cfg save',r.error); }); }catch(e){ console.error(e); }
@@ -786,6 +796,7 @@ function applyCfg(p){
     if(p.comCfg.liqExtras)comCfg.liqExtras=p.comCfg.liqExtras;
   }
   if(p.bonusByWeek)bonusByWeek=p.bonusByWeek;
+  if(typeof p.clientSeq==='number'&&p.clientSeq>=676)clientSeq=p.clientSeq;
 }
 async function loadData(){
   // Config: Supabase (principal) con fallback + migración desde localStorage
@@ -1754,6 +1765,7 @@ async function delSale(){
   var {error}=await supa.from('ventas').delete().eq('id',eid);
   if(error){alert('Error al eliminar: '+error.message);return;}
   sales=sales.filter(function(x){return String(x.id)!==String(eid);});
+  clientSeq=Math.max(676,clientSeq-1);saveData();refreshClientCode();
   closeModal();applyF();renderVentas();toast('Venta eliminada');
 }
 
@@ -1769,6 +1781,7 @@ function resetForm(){
   ge('fRevenue').value='';ge('fCash').value='';ge('formOk').style.display='none';
   ['fCloser2','fSetter2','fSource2','fColdCaller2','fDeal2','fOffer2','fPago2'].forEach(function(id){if(ge(id))ge(id).value='';});
   if(ge('fVertical'))ge('fVertical').value='';
+  refreshClientCode();
 }
 async function saveForm(){
   var nombre=ge('fNombre').value.trim(),fecha=ge('fFecha').value;
@@ -1786,6 +1799,7 @@ async function saveForm(){
   if(error){alert('Error al guardar: '+error.message);return;}
   var saved=dbRowToSale(data);
   sales.unshift(saved);applyF();
+  clientSeq=clientSeq+1;saveData();refreshClientCode();
   resetForm();ge('formOk').style.display='block';setTimeout(function(){ge('formOk').style.display='none';},3000);
 }
 
