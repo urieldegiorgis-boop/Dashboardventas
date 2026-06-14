@@ -848,24 +848,28 @@ async function loadData(){
 }
 
 // ── DATES ─────────────────────────────────────────────────────────────────
-function td(){return new Date().toISOString().split('T')[0];}
-function dAgo(n){var d=new Date();d.setDate(d.getDate()-n);return d.toISOString().split('T')[0];}
-function soW(){var d=new Date();d.setDate(d.getDate()-((d.getDay()||7)-1));return d.toISOString().split('T')[0];}
-function eoW(){var d=new Date();d.setDate(d.getDate()-((d.getDay()||7)-1)+6);return d.toISOString().split('T')[0];}
-function soLW(){var d=new Date();d.setDate(d.getDate()-((d.getDay()||7)-1)-7);return d.toISOString().split('T')[0];}
-function eoLW(){var d=new Date();d.setDate(d.getDate()-((d.getDay()||7)-1)-1);return d.toISOString().split('T')[0];}
+// Fechas en HORA LOCAL (no UTC) para que coincidan con el calendario del usuario y los inputs de fecha
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function td(){return ymd(new Date());}
+function dAgo(n){var d=new Date();d.setDate(d.getDate()-n);return ymd(d);}
+function soW(){var d=new Date();d.setDate(d.getDate()-((d.getDay()||7)-1));return ymd(d);}
+function eoW(){var d=new Date();d.setDate(d.getDate()-((d.getDay()||7)-1)+6);return ymd(d);}
+function soLW(){var d=new Date();d.setDate(d.getDate()-((d.getDay()||7)-1)-7);return ymd(d);}
+function eoLW(){var d=new Date();d.setDate(d.getDate()-((d.getDay()||7)-1)-1);return ymd(d);}
 function soM(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01';}
-function soLM(){var d=new Date();d.setDate(1);d.setMonth(d.getMonth()-1);return d.toISOString().split('T')[0];}
-function eoLM(){var d=new Date();d.setDate(0);return d.toISOString().split('T')[0];}
-var RANGES={all:[null,null],today:[td(),td()],yesterday:[dAgo(1),dAgo(1)],'3d':[dAgo(3),td()],week:[soW(),eoW()],lastweek:[soLW(),eoLW()],'7d':[dAgo(7),td()],'14d':[dAgo(14),td()],month:[soM(),td()],lastmonth:[soLM(),eoLM()],'30d':[dAgo(30),td()]};
-function getRange(){if(activePeriod==='custom')return[document.getElementById('fFrom').value,document.getElementById('fTo').value];return RANGES[activePeriod]||[null,null];}
+function soLM(){var d=new Date();d.setDate(1);d.setMonth(d.getMonth()-1);return ymd(d);}
+function eoLM(){var d=new Date();d.setDate(0);return ymd(d);}
+// Se recalcula en cada llamada para que "Today"/"This Week" no se queden congelados si el iframe sigue abierto
+function buildRanges(){return {all:[null,null],today:[td(),td()],yesterday:[dAgo(1),dAgo(1)],'3d':[dAgo(3),td()],week:[soW(),eoW()],lastweek:[soLW(),eoLW()],'7d':[dAgo(7),td()],'14d':[dAgo(14),td()],month:[soM(),td()],lastmonth:[soLM(),eoLM()],'30d':[dAgo(30),td()]};}
+function getRange(){if(activePeriod==='custom')return[document.getElementById('fFrom').value,document.getElementById('fTo').value];return buildRanges()[activePeriod]||[null,null];}
 
 // ── FILTERS ───────────────────────────────────────────────────────────────
 function applyF(){
   var r=getRange();var from=r[0],to=r[1];
   var cl=gv('fCloser'),se=gv('fSetter'),so=gv('fSource'),cc=gv('fColdCaller'),de=gv('fDeal'),q=gv('fSearch').toLowerCase();
   filtered=sales.filter(function(s){
-    if(from&&s.fecha<from)return false;if(to&&s.fecha>to)return false;
+    var f=(s.fecha||'').slice(0,10);
+    if(from&&f<from)return false;if(to&&f>to)return false;
     if(cl&&s.closer!==cl)return false;if(se&&s.setter!==se)return false;
     if(so&&s.source!==so)return false;if(cc&&s.cold_caller!==cc)return false;
     if(de&&s.deal!==de)return false;
