@@ -354,18 +354,31 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 <!-- VIEW: TODAS LAS VENTAS -->
 <div id="v-ventas" class="view">
+  <style>.btbl .selcol{display:none}.btbl.sel-on .selcol{display:table-cell}</style>
   <div class="card">
     <div class="card-head">
       <span class="card-title">Todas las ventas</span>
       <div style="display:flex;gap:8px;align-items:center">
-        <input type="text" id="vSearch" placeholder="Buscar nombre/email..." style="width:200px" oninput="renderVentas()">
+        <input type="text" id="vSearch" placeholder="Buscar nombre/email..." style="width:200px" oninput="onVentasFilter()">
         <span id="vInfo" style="font-size:11px;color:var(--t3)"></span>
+        <button class="btn btn-ghost" id="vSelBtn" onclick="toggleSelMode()">☑ Selección factura</button>
         <button class="btn btn-ghost" onclick="exportCSV()">↓ CSV</button>
       </div>
     </div>
+    <div class="fbar" style="justify-content:flex-end">
+      <div class="fg"><label>Desde</label><input type="date" id="vFrom" onchange="onVentasFilter()"></div>
+      <div class="fg"><label>Hasta</label><input type="date" id="vTo" onchange="onVentasFilter()"></div>
+      <button class="btn btn-ghost" onclick="clearVentasFilter()">Limpiar</button>
+    </div>
+    <div id="vBulkBar" style="display:none;align-items:center;gap:10px;padding:9px 14px;background:rgba(76,175,125,.12);border:1px solid rgba(76,175,125,.35);border-radius:8px;margin:0 0 10px">
+      <span id="vSelCount" style="font-size:12px;font-weight:600;color:var(--t1)"></span>
+      <button class="btn btn-primary" onclick="bulkSetFactura('si')">✓ Marcar Factura realizada (SÍ)</button>
+      <button class="btn btn-ghost" onclick="bulkSetFactura('no')">Marcar como NO</button>
+      <button class="btn btn-ghost" onclick="clearSel()" style="margin-left:auto">Deseleccionar</button>
+    </div>
     <div class="tbl-wrap">
-      <table class="btbl"><thead><tr>
-        <th>Fecha</th><th>Nombre</th><th>Email</th><th>País</th><th>Closer</th><th>Setter</th><th>Source</th><th>Cold Caller</th><th>UTM Term</th><th>Deal</th><th>Offer</th><th>Vertical</th><th>Revenue</th><th>Cash</th><th>Pago</th><th>Refund</th><th></th>
+      <table class="btbl" id="ventasTbl"><thead><tr>
+        <th class="selcol" style="width:32px;text-align:center"><input type="checkbox" id="vSelAll" onchange="toggleSelAll(this.checked)" title="Seleccionar todo"></th><th>Fecha</th><th>Nombre</th><th>Email</th><th>País</th><th>Closer</th><th>Setter</th><th>Source</th><th>Cold Caller</th><th>UTM Term</th><th>Deal</th><th>Offer</th><th>Vertical</th><th>Revenue</th><th>Cash</th><th>Pago</th><th>Refund</th><th>Factura</th><th>Código</th><th></th>
       </tr></thead><tbody id="ventasBody"></tbody></table>
     </div>
     <div id="ventasEmpty" class="empty" style="display:none">Sin ventas</div>
@@ -379,23 +392,24 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
     <div class="card-head"><span class="card-title">Nueva venta</span></div>
     <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="field"><label>Nombre *</label><input id="fNombre" placeholder="Juan García"></div>
-      <div class="field"><label>Email</label><input id="fEmail" type="email" placeholder="juan@email.com"></div>
-      <div class="field"><label>País</label><input id="fPais" placeholder="Spain"></div>
+      <div class="field"><label>Email *</label><input id="fEmail" type="email" placeholder="juan@email.com"></div>
+      <div class="field"><label>País *</label><input id="fPais" placeholder="Spain"></div>
       <div class="field"><label>Fecha *</label><input id="fFecha" type="date"></div>
       <div class="field"><label>Closer</label><select id="fCloser2"></select></div>
       <div class="field"><label>Setter</label><select id="fSetter2"></select></div>
-      <div class="field"><label>Source</label><select id="fSource2"></select></div>
+      <div class="field"><label>Source *</label><select id="fSource2"></select></div>
       <div class="field"><label>Cold Caller</label><select id="fColdCaller2"></select></div>
       <div class="field"><label>UTM Term</label><input id="fUtm" placeholder="spain-men-25-45"></div>
-      <div class="field"><label>Deal</label><select id="fDeal2"></select></div>
-      <div class="field"><label>Offer</label><select id="fOffer2"></select></div>
-      <div class="field"><label>Vertical</label><select id="fVertical"><option value="">— Seleccionar —</option><option value="Inteligencia Artificial">Inteligencia Artificial</option><option value="Marca Personal">Marca Personal</option><option value="Ecommerce">Ecommerce</option><option value="Ventas">Ventas</option></select></div>
+      <div class="field"><label>Deal *</label><select id="fDeal2"></select></div>
+      <div class="field"><label>Offer *</label><select id="fOffer2"></select></div>
+      <div class="field"><label>Vertical *</label><select id="fVertical"><option value="">— Seleccionar —</option><option value="Inteligencia Artificial">Inteligencia Artificial</option><option value="Marca Personal">Marca Personal</option><option value="Ecommerce">Ecommerce</option><option value="Ventas">Ventas</option></select></div>
       <div class="field"><label>Revenue (€) *</label><input id="fRevenue" type="number" step="0.01" placeholder="1397.00"></div>
       <div class="field"><label>Cash (€) *</label><input id="fCash" type="number" step="0.01" placeholder="930.56"></div>
-      <div class="field"><label>Tipo de Pago</label><select id="fPago2"></select></div>
+      <div class="field"><label>Tipo de Pago *</label><select id="fPago2"></select></div>
+      <div class="field"><label>Facturas Realizadas</label><select id="fHecha"><option value="no">NO</option><option value="si">SÍ</option></select></div>
       <div class="field"><label>Offer</label><select id="fOffer3" style="display:none"></select></div>
-      <div class="field full"><label>TXID / Justificante</label><input id="fTxid" placeholder="HP1234567..."></div>
-      <div class="field full"><label>Comprobante</label>
+      <div class="field full"><label>TXID / Justificante *</label><input id="fTxid" placeholder="HP1234567..."></div>
+      <div class="field full"><label>Comprobante *</label>
         <div id="fCompBox" style="border:2px dashed var(--border2);border-radius:7px;padding:12px;text-align:center;cursor:pointer;transition:border-color .2s;background:var(--bg2)" onclick="ge('fCompFile').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border2)'" ondrop="event.preventDefault();this.style.borderColor='var(--border2)';handleCompDrop(event,'f')">
           <div id="fCompPreview" style="display:none;margin-bottom:8px"><img id="fCompImg" style="max-height:80px;max-width:100%;border-radius:4px;object-fit:contain"></div>
           <div id="fCompStatus" style="font-size:12px;color:var(--t3)">📎 Clic o arrastrá una imagen aquí</div>
@@ -404,18 +418,27 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
         <input id="fNotas" type="hidden">
       </div>
     </div>
-    <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end">
+    <!-- DATOS DE FACTURACIÓN -->
+    <div style="margin:0 20px;border-top:1px solid var(--border);padding-top:16px">
+      <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Datos de facturación</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field"><label>Código de Cliente *</label><input id="fbCodigo" readonly style="background:var(--bg4);font-family:ui-monospace,SFMono-Regular,Menlo,monospace" placeholder="LTH_2026_XXX"></div>
+        <div class="field"><label>Tipo de Factura *</label><select id="fbTipo"><option value="Normal">Factura Normal</option><option value="Rectificativa (REFUND)">Rectificativa (REFUND)</option></select></div>
+        <div class="field"><label>Nombre completo del Cliente *</label><input id="fbNombre" placeholder="Juan García López"></div>
+        <div class="field"><label>Email del cliente *</label><input id="fbEmail" type="email" placeholder="juan@email.com"></div>
+        <div class="field"><label>Teléfono *</label><input id="fbTelefono" placeholder="+34 600 000 000"></div>
+        <div class="field"><label>DNI *</label><input id="fbDni" placeholder="12345678A"></div>
+        <div class="field full"><label>Dirección *</label><input id="fbDireccion" placeholder="Calle, número, piso"></div>
+        <div class="field"><label>Población/Provincia *</label><input id="fbPoblacion" placeholder="Valencia, Valencia"></div>
+        <div class="field"><label>Código Postal *</label><input id="fbCp" placeholder="46001"></div>
+      </div>
+    </div>
+    <div style="padding:14px 20px;display:flex;gap:8px;justify-content:flex-end">
       <button class="btn btn-ghost" onclick="resetForm()">Limpiar</button>
       <button class="btn btn-primary" onclick="saveForm()">Guardar venta</button>
     </div>
     <div id="formOk" style="display:none;margin:0 20px 16px;background:rgba(76,175,125,.15);border:1px solid rgba(76,175,125,.3);border-radius:6px;padding:10px 14px;color:var(--green);font-size:13px">✓ Venta guardada correctamente</div>
-    <div style="margin:0 20px 18px;border-top:1px solid var(--border);padding-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.4px">Código de cliente</span>
-        <span id="fCodigoCliente" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;font-weight:600;color:var(--t1);background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:3px 9px;letter-spacing:.3px">LTH_2026_676</span>
-      </div>
-      <a href="https://tally.so/r/b52eY2" target="_blank" rel="noopener" class="btn btn-primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:600;padding:7px 13px;font-size:12px">📄 Solicitud Factura</a>
-    </div>
+    <span id="fCodigoCliente" style="display:none">LTH_2026_676</span>
   </div>
 </div>
 
@@ -673,7 +696,8 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
       <div class="field"><label>Revenue (€)</label><input id="mRevenue" type="number" step="0.01"></div>
       <div class="field"><label>Cash (€)</label><input id="mCash" type="number" step="0.01"></div>
       <div class="field"><label>Tipo de Pago</label><select id="mPago"></select></div>
-      <div class="field"><label>Refund</label><select id="mRefund"><option value="no">No</option><option value="yes">Sí — Refund</option></select></div>
+      <div class="field"><label>Refund</label><select id="mRefund" onchange="onRefundChange()"><option value="no">No</option><option value="yes">Sí — Refund</option></select></div>
+      <div class="field"><label>Facturas Realizadas</label><select id="mHecha"><option value="no">NO</option><option value="si">SÍ</option></select></div>
       <div class="field full"><label>TXID / Justificante</label><input id="mTxid"></div>
       <div class="field full"><label>Comprobante</label>
         <div id="mCompBox" style="border:2px dashed var(--border2);border-radius:7px;padding:12px;text-align:center;cursor:pointer;transition:border-color .2s;background:var(--bg2)" onclick="ge('mCompFile').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border2)'" ondrop="event.preventDefault();this.style.borderColor='var(--border2)';handleCompDrop(event,'m')">
@@ -684,12 +708,22 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
         <input id="mNotas" type="hidden">
       </div>
     </div>
-    <div style="margin:0 20px;border-top:1px solid var(--border);padding:14px 0 2px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-      <div id="mCodigoWrap" style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.4px">Código de cliente</span>
-        <span id="mCodigoCliente" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;font-weight:600;color:var(--t1);background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:3px 9px;letter-spacing:.3px">—</span>
+    <!-- DATOS DE FACTURACIÓN (edición) -->
+    <div style="margin:0 20px;border-top:1px solid var(--border);padding-top:16px">
+      <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Datos de facturación</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field"><label>Código de Cliente</label><input id="mbCodigo" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace" placeholder="LTH_2026_XXX"></div>
+        <div class="field"><label>Tipo de Factura</label><select id="mbTipo"><option value="Normal">Factura Normal</option><option value="Rectificativa (REFUND)">Rectificativa (REFUND)</option></select></div>
+        <div class="field"><label>Nombre completo del Cliente</label><input id="mbNombre"></div>
+        <div class="field"><label>Email del cliente</label><input id="mbEmail" type="email"></div>
+        <div class="field"><label>Teléfono</label><input id="mbTelefono"></div>
+        <div class="field"><label>DNI</label><input id="mbDni"></div>
+        <div class="field full"><label>Dirección</label><input id="mbDireccion"></div>
+        <div class="field"><label>Población/Provincia</label><input id="mbPoblacion"></div>
+        <div class="field"><label>Código Postal</label><input id="mbCp"></div>
       </div>
-      <a href="https://tally.so/r/b52eY2" target="_blank" rel="noopener" class="btn btn-primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:600;padding:7px 13px;font-size:12px">📄 Solicitud Factura</a>
+      <span id="mCodigoCliente" style="display:none">—</span>
+      <span id="mCodigoWrap" style="display:none"></span>
     </div>
     <div class="modal-foot">
       <button class="btn btn-danger" onclick="delSale()" style="margin-right:auto">Eliminar</button>
@@ -728,7 +762,7 @@ var sales=[],filtered=[],eid=null,nid=1;
 var clientSeq=676; // código de cliente correlativo: número de la PRÓXIMA venta nueva
 var clientCodes={}; // idVenta -> número de código (SOLO ventas creadas desde ahora; las viejas no llevan)
 function fmtClientCode(n){return 'LTH_'+(new Date().getFullYear())+'_'+String(n).padStart(3,'0');}
-function refreshClientCode(){var el=ge('fCodigoCliente');if(el)el.textContent=fmtClientCode(clientSeq);}
+function refreshClientCode(){var c=fmtClientCode(syncClientSeq());var el=ge('fCodigoCliente');if(el)el.textContent=c;var fb=ge('fbCodigo');if(fb)fb.value=c;}
 // Código de cliente SOLO para ventas creadas desde ahora (guardadas en clientCodes).
 // Las ventas viejas no tienen código -> devuelve null (en edición no se muestra).
 function saleClientCode(s){
@@ -738,6 +772,20 @@ function saleClientCode(s){
   if(!n||isNaN(n))return null;
   return fmtClientCode(n);
 }
+// Código de cliente unificado: primero el guardado en facturación, luego el del sistema viejo.
+function saleCode(s){return (s&&s.fact&&s.fact.codigo)||saleClientCode(s)||'';}
+// Mayor número de código usado entre todas las ventas (para que el siguiente sea siempre superior).
+function maxCodeNum(){
+  var mx=0;
+  sales.forEach(function(s){
+    var c=saleCode(s),m=c&&c.match(/_(\d+)$/);
+    if(m){var n=parseInt(m[1],10);if(!isNaN(n)&&n>mx)mx=n;}
+  });
+  return mx;
+}
+// Mantiene el contador por encima del mayor código real y devuelve el próximo número.
+// Suelo fijado en 706: a partir de ahora las ventas nuevas empiezan en LTH_2026_706.
+function syncClientSeq(){var n=Math.max(maxCodeNum()+1,706);if(n>clientSeq)clientSeq=n;return clientSeq;}
 var sk='fecha',sd=-1,vpg=1,vpp=30;
 var evoGran='day',activePeriod='all';
 
@@ -764,7 +812,8 @@ function dbRowToSale(r){
     notas: r.notas||'',
     justificante: r.justificante||'',
     cuentaIG: r.cuenta_ig||'',
-    vertical: r.vertical||''
+    vertical: r.vertical||'',
+    fact: (r.facturacion && typeof r.facturacion==='object') ? r.facturacion : {}
   };
 }
 function saleToDbRow(s){
@@ -788,7 +837,8 @@ function saleToDbRow(s){
     notas: s.notas||'',
     justificante: s.justificante||'',
     cuenta_ig: s.cuentaIG||'',
-    vertical: s.vertical||''
+    vertical: s.vertical||'',
+    facturacion: s.fact || {}
   };
   return row;
 }
@@ -1308,10 +1358,14 @@ function renderVerticals(){
     var col=VERT_COLORS[i]||'#8892aa';
     var card=document.createElement('div');card.className='vert-card';
     card.style.borderTop='2px solid '+col;
-    card.innerHTML='<div class="vert-card-name">'+esc(v)+'</div>'
+    card.style.cursor='pointer';card.style.transition='border-color .15s,transform .1s';
+    card.onmouseenter=function(){this.style.transform='translateY(-2px)';};
+    card.onmouseleave=function(){this.style.transform='';};
+    card.innerHTML='<div class="vert-card-name">'+esc(v)+'<span style="font-size:9px;color:var(--t3);float:right;font-weight:500">Ver ventas →</span></div>'
       +'<div class="vert-card-num">'+fmt(d.cash)+'</div>'
       +'<div class="vert-card-sub">'+d.pagos+' ventas · '+pct+'% del total</div>'
       +'<div class="vert-bar"><div class="vert-bar-fill" style="width:'+pct+'%;background:'+col+'"></div></div>';
+    card.onclick=(function(vv){return function(){openVertDetail(vv);};})(v);
     grid.appendChild(card);
   });
 
@@ -1514,14 +1568,15 @@ function openDetModal(type){
     else if(type==='setter')key=s.setter||'Sin setter';
     else if(type==='source')key=s.source||'Otro';
     else if(type==='utm')key=s.utm||'Sin UTM';
+    else if(type==='vertical')key=s.vertical||'Otro';
     if(!key)return;
     if(!map[key])map[key]={cash:0,pagos:0};
     var c=parseFloat(s.cash)||0;
     map[key].cash+=c;map[key].pagos++;
     totalCash+=c;totalPagos++;
   });
-  var titles={closer:'Cash por Closer',setter:'Cash por Setter',source:'Cash por Source',utm:'Cash por UTM Term'};
-  var labels={closer:'closers',setter:'setters',source:'fuentes',utm:'UTM terms'};
+  var titles={closer:'Cash por Closer',setter:'Cash por Setter',source:'Cash por Source',utm:'Cash por UTM Term',vertical:'Cash por Vertical'};
+  var labels={closer:'closers',setter:'setters',source:'fuentes',utm:'UTM terms',vertical:'verticales'};
   ge('detModalTitle').textContent=titles[type]||'Detalle';
   ge('detTotalLabel').textContent='Cash Collected';
   ge('detTotalNum').textContent=fmt(totalCash);
@@ -1578,6 +1633,7 @@ function openDrillDown(type,key,color){
     if(type==='setter')return(s.setter||'Sin setter')===key;
     if(type==='source')return(s.source||'Otro')===key;
     if(type==='utm')return(s.utm||'Sin UTM')===key;
+    if(type==='vertical')return(s.vertical||'Otro')===key;
     return false;
   });
   ventas.sort(function(a,b){return(b.fecha||'').localeCompare(a.fecha||'');});
@@ -1607,11 +1663,15 @@ function openDrillDown(type,key,color){
   ge('detSummaryView').style.display='none';
   ge('detDrillView').style.display='block';
 }
+function openVertDetail(v){
+  openDetModal('vertical');
+  openDrillDown('vertical',v,'');
+}
 function closeDrillDown(){
   ge('detBackBtn').style.display='none';
   ge('detSummaryView').style.display='block';
   ge('detDrillView').style.display='none';
-  var titles={closer:'Cash por Closer',setter:'Cash por Setter',source:'Cash por Source',utm:'Cash por UTM Term'};
+  var titles={closer:'Cash por Closer',setter:'Cash por Setter',source:'Cash por Source',utm:'Cash por UTM Term',vertical:'Cash por Vertical'};
   ge('detModalTitle').textContent=titles[_detType]||'Detalle';
 }
 function closeDetModal(){
@@ -1710,15 +1770,44 @@ function show(v,btn){
 }
 
 // ── VENTAS TABLE ──────────────────────────────────────────────────────────
-function renderVentas(){
+function ventasFilter(){
   var q=(gv('vSearch')||'').toLowerCase();
-  var arr=sales.filter(function(s){return !q||((s.nombre||'').toLowerCase().includes(q))||((s.email||'').toLowerCase().includes(q));});
-  arr.sort(function(a,b){return(b.fecha||'').localeCompare(a.fecha||'');});
+  var from=gv('vFrom')||'',to=gv('vTo')||'';
+  return sales.filter(function(s){
+    if(q&&!(((s.nombre||'').toLowerCase().includes(q))||((s.email||'').toLowerCase().includes(q))))return false;
+    var f=s.fecha||'';
+    if(from&&(!f||f<from))return false;
+    if(to&&(!f||f>to))return false;
+    return true;
+  }).sort(function(a,b){return(b.fecha||'').localeCompare(a.fecha||'');});
+}
+function weekRange(dateStr){
+  var d=new Date(dateStr+'T00:00:00');
+  var off=(d.getDay()+6)%7; // lunes=0
+  var mon=new Date(d);mon.setDate(d.getDate()-off);
+  var sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  var f=function(x){return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');};
+  return [f(mon),f(sun)];
+}
+function setThisWeek(){var r=weekRange(td());ge('vFrom').value=r[0];ge('vTo').value=r[1];onVentasFilter();}
+function moveWeek(dir){
+  var base=gv('vFrom')||td();
+  var d=new Date(base+'T00:00:00');d.setDate(d.getDate()+dir*7);
+  var r=weekRange(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));
+  ge('vFrom').value=r[0];ge('vTo').value=r[1];onVentasFilter();
+}
+function clearVentasFilter(){ge('vFrom').value='';ge('vTo').value='';onVentasFilter();}
+function onVentasFilter(){vpg=1;renderVentas();}
+function renderVentas(){
+  var arr=ventasFilter();
+  var from=gv('vFrom')||'',to=gv('vTo')||'';
+  var ri=ge('vRangeInfo');if(ri)ri.textContent=(from||to)?('Rango: '+(from||'…')+' → '+(to||'…')+' · '+arr.length+' ventas'):'';
   var start=(vpg-1)*vpp,end=start+vpp,sl=arr.slice(start,end);
   var tb=ge('ventasBody');tb.innerHTML='';
   sl.forEach(function(s){
     var isR=s.refund==='yes';var tr=document.createElement('tr');
-    tr.innerHTML='<td>'+fmtD(s.fecha)+'</td>'
+    tr.innerHTML='<td class="selcol" style="text-align:center"><input type="checkbox" '+(vSel[s.id]?'checked':'')+' onchange="toggleSel('+s.id+',this.checked)"></td>'
+      +'<td>'+fmtD(s.fecha)+'</td>'
       +'<td style="font-weight:600'+(isR?';color:var(--red)':'')+'">'+esc(s.nombre)+'</td>'
       +'<td style="font-size:11px;color:var(--t2)">'+esc(s.email)+'</td>'
       +'<td>'+esc(s.pais)+'</td><td>'+esc(s.closer)+'</td><td>'+esc(s.setter)+'</td>'
@@ -1732,11 +1821,14 @@ function renderVentas(){
       +'<td style="color:var(--green);font-weight:600">'+fmt(s.cash)+'</td>'
       +'<td>'+esc(s.tipoPago)+'</td>'
       +'<td>'+(isR?'<span class="pill pr">Sí</span>':'')+'</td>'
+      +'<td>'+(((s.fact&&s.fact.hecha)==='si')?'<span class="pill pg">SÍ</span>':'<span class="pill pr">NO</span>')+'</td>'
+      +'<td style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--t2)">'+esc(saleCode(s)||'—')+'</td>'
       +'<td><button class="btn btn-ghost" style="padding:2px 8px;font-size:11px" onclick="openEdit('+s.id+')">Editar</button></td>';
     tb.appendChild(tr);
   });
   ge('ventasEmpty').style.display=arr.length?'none':'block';
   ge('vInfo').textContent=arr.length+' ventas';
+  updateBulkBar();syncSelAll();
   var tot=Math.ceil(arr.length/vpp),pw=ge('ventasPag');pw.innerHTML='';
   if(tot>1){
     function pb(t,p,a){var b=document.createElement('button');b.className='pbtn'+(a?' act':'');b.textContent=t;b.onclick=function(){vpg=p;renderVentas();};return b;}
@@ -1746,6 +1838,61 @@ function renderVentas(){
   }
 }
 
+// ── SELECCIÓN MÚLTIPLE (marcar facturas en lote) ──────────────────────────
+var vSel={}; // id -> true
+var selMode=false;
+function toggleSelMode(){
+  selMode=!selMode;
+  if(!selMode)vSel={};
+  var t=ge('ventasTbl');if(t)t.classList.toggle('sel-on',selMode);
+  var b=ge('vSelBtn');
+  if(b){b.textContent=selMode?'✕ Salir de selección':'☑ Selección factura';b.classList.toggle('btn-primary',selMode);b.classList.toggle('btn-ghost',!selMode);}
+  renderVentas();
+}
+function selCount(){return Object.keys(vSel).length;}
+function updateBulkBar(){
+  var n=selCount(),bar=ge('vBulkBar');
+  if(bar)bar.style.display=n?'flex':'none';
+  var c=ge('vSelCount');if(c)c.textContent=n+(n===1?' venta seleccionada':' ventas seleccionadas');
+}
+function syncSelAll(){
+  var arr=ventasFilter(),el=ge('vSelAll');
+  if(el)el.checked=arr.length>0&&arr.every(function(s){return vSel[s.id];});
+}
+function toggleSel(id,on){if(on)vSel[id]=true;else delete vSel[id];updateBulkBar();syncSelAll();}
+function toggleSelAll(on){
+  ventasFilter().forEach(function(s){if(on)vSel[s.id]=true;else delete vSel[s.id];});
+  renderVentas();
+}
+function clearSel(){vSel={};renderVentas();}
+async function bulkSetFactura(val){
+  var sel=sales.filter(function(s){return vSel[s.id];});
+  if(!sel.length)return;
+  if(!confirm('Marcar "Factura realizada" = '+(val==='si'?'SÍ':'NO')+' en '+sel.length+' venta(s)?'))return;
+  var done=0,fails=0;
+  for(var i=0;i<sel.length;i++){
+    var s=sel[i];
+    s.fact=s.fact||{};
+    s.fact.hecha=val;
+    var r=await supa.from('ventas').update(saleToDbRow(s)).eq('id',s.id);
+    if(r.error){fails++;console.error('bulkFactura',s.id,r.error);}else{done++;}
+    toast('Actualizando facturas… '+(done+fails)+'/'+sel.length);
+  }
+  vSel={};applyF();renderVentas();
+  toast(fails?('Hecho — '+done+' ok, '+fails+' con error'):(done+' factura(s) marcadas '+(val==='si'?'como SÍ ✓':'como NO')));
+}
+// Guarda el código de cliente editado desde la tabla
+async function setSaleCode(id,val){
+  var s=sales.find(function(x){return x.id===id;});if(!s)return;
+  val=(val||'').trim();
+  s.fact=s.fact||{};
+  s.fact.codigo=val;
+  var m=val.match(/_(\d+)$/);
+  if(m){clientCodes[id]=parseInt(m[1],10);saveData();}
+  var r=await supa.from('ventas').update(saleToDbRow(s)).eq('id',id);
+  if(r.error){alert('Error al guardar el código: '+r.error.message);return;}
+  toast(val?('Código '+val+' guardado ✓'):'Código borrado');
+}
 // ── MODAL EDITAR ──────────────────────────────────────────────────────────
 function openEdit(id){
   var s=sales.find(function(x){return x.id===id;});if(!s)return;
@@ -1763,9 +1910,28 @@ function openEdit(id){
   var code=saleClientCode(s),ccWrap=ge('mCodigoWrap'),ccEl=ge('mCodigoCliente');
   if(code){if(ccEl)ccEl.textContent=code;if(ccWrap)ccWrap.style.display='flex';}
   else{if(ccWrap)ccWrap.style.display='none';}
+  // Datos de facturación
+  var f=s.fact||{};
+  ge('mbCodigo').value=f.codigo||code||'';
+  ge('mbTipo').value=f.tipo||'Normal';
+  ge('mbNombre').value=f.nombre||'';
+  ge('mbEmail').value=f.email||'';
+  ge('mbTelefono').value=f.telefono||'';
+  ge('mbDni').value=f.dni||'';
+  ge('mbDireccion').value=f.direccion||'';
+  ge('mbPoblacion').value=f.poblacion||'';
+  ge('mbCp').value=f.cp||'';
+  ge('mHecha').value=(f.hecha==='si')?'si':'no';
   ge('modalBg').classList.add('open');
 }
 function closeModal(){ge('modalBg').classList.remove('open');eid=null;}
+function onRefundChange(){
+  if(ge('mRefund').value==='yes'){
+    ge('mbTipo').value='Rectificativa (REFUND)';
+    ge('mHecha').value='no';
+    toast('Refund → factura Rectificativa pendiente');
+  }
+}
 async function saveSale(){
   if(eid===null)return;
   var idx=sales.findIndex(function(x){return x.id===eid;});if(idx<0)return;
@@ -1780,6 +1946,20 @@ async function saveSale(){
   s.revenue=ge('mRevenue').value;s.cash=ge('mCash').value;
   s.tipoPago=ge('mPago').value;s.refund=ge('mRefund').value;
   s.txid=ge('mTxid').value.trim();s.notas=ge('mNotas').value.trim();
+  s.fact={
+    codigo:ge('mbCodigo').value.trim(),
+    tipo:ge('mbTipo').value,
+    nombre:ge('mbNombre').value.trim(),
+    email:ge('mbEmail').value.trim(),
+    telefono:ge('mbTelefono').value.trim(),
+    dni:ge('mbDni').value.trim(),
+    direccion:ge('mbDireccion').value.trim(),
+    poblacion:ge('mbPoblacion').value.trim(),
+    cp:ge('mbCp').value.trim(),
+    hecha:ge('mHecha').value
+  };
+  var _cm=(s.fact.codigo||'').match(/_(\d+)$/);
+  if(_cm){clientCodes[eid]=parseInt(_cm[1],10);saveData();}
   var {error}=await supa.from('ventas').update(saleToDbRow(s)).eq('id',eid);
   if(error){alert('Error al actualizar: '+error.message);return;}
   closeModal();applyF();renderVentas();toast('Venta actualizada ✓');
@@ -1807,20 +1987,48 @@ function resetForm(){
   ge('fRevenue').value='';ge('fCash').value='';ge('formOk').style.display='none';
   ['fCloser2','fSetter2','fSource2','fColdCaller2','fDeal2','fOffer2','fPago2'].forEach(function(id){if(ge(id))ge(id).value='';});
   if(ge('fVertical'))ge('fVertical').value='';
+  ['fbNombre','fbEmail','fbTelefono','fbDni','fbDireccion','fbPoblacion','fbCp'].forEach(function(id){if(ge(id))ge(id).value='';});
+  if(ge('fbTipo'))ge('fbTipo').value='Normal';
+  if(ge('fHecha'))ge('fHecha').value='no';
   refreshClientCode();
 }
 async function saveForm(){
-  var nombre=ge('fNombre').value.trim(),fecha=ge('fFecha').value;
-  if(!nombre||!fecha){alert('Nombre y fecha son obligatorios.');return;}
   var setter=ge('fSetter2').value,cc=ge('fColdCaller2').value;
   if(setter&&cc){alert('Una venta solo puede tener Setter o Cold Caller, no los dos.');return;}
+  // Campos obligatorios (todos menos Closer, Setter y Cold Caller)
+  var reqd=[
+    ['fNombre','Nombre'],['fEmail','Email'],['fPais','País'],['fFecha','Fecha'],
+    ['fSource2','Source'],['fDeal2','Deal'],['fOffer2','Offer'],
+    ['fVertical','Vertical'],['fRevenue','Revenue'],['fCash','Cash'],['fPago2','Tipo de Pago'],
+    ['fTxid','TXID / Justificante'],['fNotas','Comprobante'],
+    ['fbNombre','Nombre completo del Cliente'],['fbEmail','Email del cliente'],
+    ['fbTelefono','Teléfono'],['fbDni','DNI'],['fbDireccion','Dirección'],
+    ['fbPoblacion','Población/Provincia'],['fbCp','Código Postal']
+  ];
+  var faltan=[];
+  reqd.forEach(function(p){var el=ge(p[0]);if(!el||!String(el.value).trim())faltan.push(p[1]);});
+  if(faltan.length){alert('Faltan campos obligatorios:\n\n• '+faltan.join('\n• '));return;}
+  var nombre=ge('fNombre').value.trim(),fecha=ge('fFecha').value;
+  var fact={
+    codigo:ge('fbCodigo').value.trim(),
+    tipo:ge('fbTipo').value,
+    nombre:ge('fbNombre').value.trim(),
+    email:ge('fbEmail').value.trim(),
+    telefono:ge('fbTelefono').value.trim(),
+    dni:ge('fbDni').value.trim(),
+    direccion:ge('fbDireccion').value.trim(),
+    poblacion:ge('fbPoblacion').value.trim(),
+    cp:ge('fbCp').value.trim(),
+    hecha:ge('fHecha').value
+  };
   var s={nombre:nombre,email:ge('fEmail').value.trim(),pais:ge('fPais').value.trim(),fecha:fecha,
     closer:ge('fCloser2').value,setter:setter,source:ge('fSource2').value,
     cold_caller:cc,
     utm:ge('fUtm').value.trim(),deal:ge('fDeal2').value,offer:ge('fOffer2').value,
     vertical:ge('fVertical').value,
     revenue:ge('fRevenue').value,cash:ge('fCash').value,tipoPago:ge('fPago2').value,
-    refund:'no',txid:ge('fTxid').value.trim(),notas:ge('fNotas').value.trim(),cuentaIG:'',justificante:''};
+    refund:'no',txid:ge('fTxid').value.trim(),notas:ge('fNotas').value.trim(),cuentaIG:'',justificante:'',
+    fact:fact};
   var {data,error}=await supa.from('ventas').insert([saleToDbRow(s)]).select().single();
   if(error){alert('Error al guardar: '+error.message);return;}
   var saved=dbRowToSale(data);
@@ -2325,9 +2533,28 @@ function renderLiquidacion(){
 }
 function exportCSV(){
   var cols=['fecha','nombre','email','pais','closer','setter','source','utm','deal','offer','revenue','cash','tipoPago','refund','txid','notas'];
-  var rows=[cols.join(',')];
-  sales.forEach(function(s){rows.push(cols.map(function(c){return '"'+(s[c]||'').toString().replace(/"/g,'""')+'"';}).join(','));});
-  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));a.download='lathos_ventas.csv';a.click();
+  var factCols=[
+    ['fact_codigo','codigo'],['fact_tipo','tipo'],['fact_nombre','nombre'],['fact_email','email'],
+    ['fact_telefono','telefono'],['fact_dni','dni'],['fact_direccion','direccion'],
+    ['fact_poblacion','poblacion'],['fact_cp','cp'],['fact_realizada','hecha']
+  ];
+  var header=cols.concat(factCols.map(function(p){return p[0];}));
+  var rows=[header.join(',')];
+  var arr=ventasFilter();
+  arr.forEach(function(s){
+    var base=cols.map(function(c){return '"'+(s[c]||'').toString().replace(/"/g,'""')+'"';});
+    var f=s.fact||{};
+    var fb=factCols.map(function(p){
+      var v=f[p[1]]||'';
+      if(p[1]==='codigo')v=saleCode(s);
+      if(p[1]==='hecha')v=(v==='si')?'SÍ':'NO';
+      return '"'+(v+'').replace(/"/g,'""')+'"';
+    });
+    rows.push(base.concat(fb).join(','));
+  });
+  var from=gv('vFrom')||'',to=gv('vTo')||'';
+  var name=(from||to)?('lathos_ventas_'+(from||'inicio')+'_a_'+(to||'hoy')+'.csv'):'lathos_ventas.csv';
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));a.download=name;a.click();
 }
 
 
